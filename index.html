@@ -238,6 +238,7 @@
 
                     <div class="shrink-0 pointer-events-auto">
                         <div class="px-3 pb-2 space-y-2">
+                            <button id="arPlaceBtn" onclick="app.placeInRoom()" class="hidden w-full h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-sky-300 text-sky-700 text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:bg-sky-50 transition"></button>
                             <div id="arCollect"></div>
                             <div class="h-12 p-[5px] rounded-2xl bg-white/95 backdrop-blur-md border border-sky-200 shadow-sm flex items-center gap-1">
                                 <span class="shrink-0 flex items-center gap-1 pl-2 pr-1.5 text-[11px] font-semibold text-marble-muted">
@@ -307,6 +308,26 @@
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>
             </section>
+        </div>
+    </div>
+
+    <!-- Room AR (WebXR): shown over the camera view while the session runs -->
+    <div id="xrOverlay" class="hidden fixed inset-0 z-[100] pointer-events-none">
+        <div id="xrPins" class="absolute inset-0"></div>
+        <div class="absolute inset-x-0 top-0 p-3 flex items-center gap-2" style="padding-top: max(12px, env(safe-area-inset-top))">
+            <button onclick="app.exitRoom()" class="pointer-events-auto shrink-0 h-11 px-4 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-marble-ink text-sm font-semibold flex items-center gap-1.5"><span id="xrExitIcon"></span><span id="xrExitText"></span></button>
+            <div class="flex-1 min-w-0 px-3 py-2 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
+                <div id="xrTitle" class="text-sm font-semibold text-marble-ink truncate"></div>
+            </div>
+        </div>
+        <div class="absolute inset-x-0 bottom-0 p-3 space-y-2" style="padding-bottom: max(12px, env(safe-area-inset-bottom))">
+            <div class="flex justify-center"><span id="xrHint" class="max-w-full px-3.5 py-2 rounded-2xl bg-slate-900/85 backdrop-blur-md text-white text-[13px] font-semibold text-center shadow-lg"></span></div>
+            <div id="xrStory" class="hidden pointer-events-auto bg-white rounded-3xl border border-sky-200 shadow-lg p-4 space-y-2 max-h-[30vh] overflow-y-auto mobile-scroll"></div>
+            <div id="xrTools" class="hidden pointer-events-auto flex items-center gap-2">
+                <button id="xrSizeBtn" onclick="app.roomSize()" class="flex-1 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-sky-700 text-sm font-semibold flex items-center justify-center gap-1.5"></button>
+                <button id="xrRotL" onclick="app.roomRotate(-15)" class="w-11 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-sky-700 flex items-center justify-center"></button>
+                <button id="xrRotR" onclick="app.roomRotate(15)" class="w-11 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-sky-700 flex items-center justify-center"></button>
+            </div>
         </div>
     </div>
 

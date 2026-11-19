@@ -15,6 +15,11 @@ export type CameraStatus = 'off' | 'live' | 'simulated';
  * view, or image out of view with the model held in place by the gyroscope.
  */
 export type ImageArStatus = 'off' | 'loading' | 'scanning' | 'tracking' | 'holding';
+/**
+ * Room AR (WebXR): not available on this device, off, starting, looking for
+ * the floor, floor found (tap to place), or model placed.
+ */
+export type RoomArStatus = 'unsupported' | 'off' | 'starting' | 'searching' | 'aiming' | 'placed';
 
 export interface AppState {
     // language & audio guide
@@ -41,6 +46,9 @@ export interface AppState {
     imageAr: ImageArStatus;
     /** Exhibit of the image last found by image AR, or null. */
     imageArExhibit: number | null;
+    roomAr: RoomArStatus;
+    /** Index into ROOM_SCALES (features/ar/room.ts). */
+    roomSize: number;
 
     // sensors
     gps: GpsStatus;
@@ -94,6 +102,8 @@ let state: AppState = {
     camera: 'off',
     imageAr: 'off',
     imageArExhibit: null,
+    roomAr: 'unsupported',
+    roomSize: 1,
 
     gps: 'off',
     coords: null,

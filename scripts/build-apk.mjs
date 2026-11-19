@@ -12,7 +12,7 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
 const IMAGE = 'athenar-android-build:36';
-const run = (cmd) => execSync(cmd, { cwd: root, stdio: 'inherit' });
+const run = (cmd, env = {}) => execSync(cmd, { cwd: root, stdio: 'inherit', env: { ...process.env, ...env } });
 
 try {
     execSync('docker info', { stdio: 'ignore' });
@@ -22,7 +22,7 @@ try {
 }
 
 console.log('\n▶ 1/3  Building the web app');
-run('npm run build');
+run('npm run build', { VITE_TARGET: 'android' }); // leaves out what the WebView cannot run (WebXR)
 run('npx cap sync android');
 
 console.log('\n▶ 2/3  Preparing the Android build image (slow the first time only)');

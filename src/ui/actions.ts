@@ -3,6 +3,7 @@
 import { exhibitsData } from '../data/exhibits';
 import type { ArEra, CorridorId, EraRoom, Lang } from '../data/types';
 import { scanLock, simulateWrongBuilding, stopTimelapse, toggleCamera, toggleTimelapse } from '../features/ar/controls';
+import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar/room';
 import { zoomBy } from '../features/ar/three/engine';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
 import { getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
@@ -139,6 +140,10 @@ export const app = {
         if (total < 1) return;
         setState({ hotspotIndex: (getState().hotspotIndex + delta + total) % total });
     },
+    placeInRoom,
+    exitRoom,
+    roomSize: cycleRoomSize,
+    roomRotate: rotateRoom,
 
     // --- memories ---
     openMemory(): void {

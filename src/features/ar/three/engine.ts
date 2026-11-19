@@ -1,10 +1,13 @@
 // Three.js scene for the 3D hologram: renderer, lights, drag-to-orbit, the
-// animation loop and the two ways of anchoring it to the real world:
+// animation loop and the three ways of anchoring it to the real world:
 //  - direction-anchored: the camera turns with the compass (outdoors, GPS);
-//  - image-anchored: the model sits on a tracked picture (setImageTracking).
+//  - image-anchored: the model sits on a tracked picture (setImageTracking);
+//  - room-anchored: WebXR tracks the phone and the model stands on the real
+//    floor, so you can walk around it (setRoomMode, driven by roomSession.ts).
 // Owns its own objects; talks to the rest of the app only through
 // the functions exported here.
 import * as THREE from 'three';
+import type { XRFrame } from 'three/src/renderers/webxr/WebXR';
 import type { Exhibit } from '../../../data/types';
 import { getHeading, getPitch } from '../../../platform/compass';
 import { signedAngleDelta } from '../../../platform/geoMath';
@@ -113,6 +116,15 @@ let lastFrameTime = 0;
 /** Bounds of the current model in its own space, for fitting it on the image. */
 let modelBox = new THREE.Box3(new THREE.Vector3(-3, 0, -2), new THREE.Vector3(3, 4, 2));
 
+/** Room-anchored mode: the model group stands in this, on the floor. Null when off. */
+let roomRoot: THREE.Group | null = null;
+/** Ring on the floor where a tap would put the model. */
+let reticle: THREE.Mesh | null = null;
+let roomFrameHook: ((frame: XRFrame) => void) | null = null;
+/** Extra turn from the rotate buttons, on top of facing the visitor. */
+let roomTurn = 0;
+let roomFacing = 0;
+
 export function initEngine(host: HTMLElement, frameCallback: () => void): boolean {
     container = host;
     onFrame = frameCallback;
@@ -174,12 +186,12 @@ export function initEngine(host: HTMLElement, frameCallback: () => void): boolea
     });
     window.addEventListener('resize', resizeEngine);
 
-    animate();
+    renderer.setAnimationLoop(animate);
     return true;
 }
 
 export function resizeEngine(): void {
-    if (!container || !renderer || !camera) return;
+    if (!container || !renderer || !camera || renderer.xr.isPresenting) return;
     const w = container.clientWidth || 360;
     const h = container.clientHeight || 365;
     camera.aspect = w / h;
@@ -408,19 +420,8 @@ export function isAnchored(): boolean {
     return anchorBearing !== null && getHeading() !== null;
 }
 
-function animate(): void {
-    requestAnimationFrame(animate);
-    const nowMs = performance.now();
-    const dt = Math.min(0.1, (nowMs - (lastFrameTime || nowMs)) / 1000);
-    lastFrameTime = nowMs;
-    if (!renderer || !scene || !camera || !group || !active) return;
-
-    const anchored = !tracking && isAnchored();
-    if (!dragging && !anchored && !tracking) targetRotY += AUTO_SPIN_PER_FRAME;
-    group.rotation.y += (targetRotY - group.rotation.y) * 0.1;
-    group.rotation.x += (targetRotX - group.rotation.x) * 0.1;
-
-    // Chimney smoke (Gazi, 1900 & 1950)
+/** Chimney smoke (Gazi, 1900 & 1950). */
+function animateSmoke(): void {
     const now = performance.now() * 0.0018;
     smoke.forEach((puff, idx) => {
         const cycle = (now + puff.userData.offset) % 2.4;
@@ -429,6 +430,29 @@ function animate(): void {
         const scale = 0.85 + cycle * 0.45;
         puff.scale.set(scale, scale, scale);
     });
+}
+
+function animate(_time: number, frame?: XRFrame): void {
+    const nowMs = performance.now();
+    const dt = Math.min(0.1, (nowMs - (lastFrameTime || nowMs)) / 1000);
+    lastFrameTime = nowMs;
+    if (!renderer || !scene || !camera || !group) return;
+
+    if (renderer.xr.isPresenting) {
+        // WebXR moves the camera with the phone; the model stays on the floor.
+        animateSmoke();
+        if (frame) roomFrameHook?.(frame);
+        renderer.render(scene, camera);
+        onFrame?.();
+        return;
+    }
+    if (!active) return;
+
+    const anchored = !tracking && isAnchored();
+    if (!dragging && !anchored && !tracking) targetRotY += AUTO_SPIN_PER_FRAME;
+    group.rotation.y += (targetRotY - group.rotation.y) * 0.1;
+    group.rotation.x += (targetRotX - group.rotation.x) * 0.1;
+    animateSmoke();
 
     if (tracking) {
         // The camera stays put; the tracker (or, out of view, the gyroscope) moves the model.
@@ -464,19 +488,145 @@ function animate(): void {
     onFrame?.();
 }
 
-/** Screen position (px inside the container) of hotspot pin `index`. */
+const viewInverse = new THREE.Matrix4();
+
+/**
+ * Screen position of hotspot pin `index`: px inside the container, or, in room
+ * mode, inside the full-screen AR overlay.
+ */
 export function projectHotspot(index: number): { x: number; y: number; visible: boolean } | null {
-    if (!container || !camera || !group) return null;
+    if (!container || !camera || !group || !renderer) return null;
+    const room = renderer.xr.isPresenting;
+    const view = room ? ((renderer.xr.getCamera(camera) as THREE.ArrayCamera).cameras[0] ?? camera) : camera;
     const [ax, ay, az] = HOTSPOT_ANCHORS[index % HOTSPOT_ANCHORS.length];
     const v = new THREE.Vector3(ax, ay, az);
-    v.applyMatrix4(group.matrixWorld); // the model's rotation, and on a tracked image its pose
-    v.project(camera);
-    const w = container.clientWidth || 360;
-    const h = container.clientHeight || 365;
-    const modelShown = !tracking || (trackRoot?.visible ?? false);
+    v.applyMatrix4(group.matrixWorld); // the model's rotation, and on a tracked image or the floor its pose
+    v.applyMatrix4(viewInverse.copy(view.matrixWorld).invert()).applyMatrix4(view.projectionMatrix);
+    const w = room ? window.innerWidth : container.clientWidth || 360;
+    const h = room ? window.innerHeight : container.clientHeight || 365;
+    const modelShown = room ? (roomRoot?.visible ?? false) : !tracking || (trackRoot?.visible ?? false);
     return {
         x: (v.x * 0.5 + 0.5) * w,
         y: (-v.y * 0.5 + 0.5) * h,
         visible: modelShown && v.z < 1 && Math.abs(v.x) < 1.15 && Math.abs(v.y) < 1.15,
     };
+}
+
+// ---------------------------------------------------------------- room mode
+
+export function getRenderer(): THREE.WebGLRenderer | null {
+    return renderer;
+}
+
+/** Called with every WebXR frame while room mode runs (hit testing). */
+export function setRoomFrameHook(hook: ((frame: XRFrame) => void) | null): void {
+    roomFrameHook = hook;
+}
+
+/** A soft dark ellipse under the model, so it looks like it stands on the floor. */
+function makeContactShadow(): THREE.Mesh {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 128;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    const fade = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    fade.addColorStop(0, 'rgba(15, 23, 42, 0.45)');
+    fade.addColorStop(0.6, 'rgba(15, 23, 42, 0.18)');
+    fade.addColorStop(1, 'rgba(15, 23, 42, 0)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 0, 128, 128);
+    const size = modelBox.getSize(new THREE.Vector3());
+    const disc = new THREE.Mesh(
+        new THREE.PlaneGeometry(size.x * 1.3, size.z * 1.3),
+        new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false }),
+    );
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = 0.01;
+    disc.renderOrder = -1;
+    return disc;
+}
+
+function dispose(mesh: THREE.Mesh): void {
+    mesh.geometry.dispose();
+    const material = mesh.material as THREE.MeshBasicMaterial;
+    material.map?.dispose();
+    material.dispose();
+}
+
+/**
+ * Room mode on: the model stands, centred and upright, in a floor-level group
+ * that stays hidden until placeRoomModel(). `scale` is metres per model unit.
+ * Off: the model returns to the normal 3D view.
+ */
+export function setRoomMode(on: boolean, scale = 1): void {
+    if (!scene || !group) return;
+    if (on) {
+        if (roomRoot) return;
+        roomRoot = new THREE.Group();
+        roomRoot.visible = false;
+        roomRoot.scale.setScalar(scale);
+        const centre = modelBox.getCenter(new THREE.Vector3());
+        group.rotation.set(0, 0, 0);
+        group.position.set(-centre.x, -modelBox.min.y, -centre.z);
+        roomRoot.add(group, makeContactShadow());
+        reticle = new THREE.Mesh(
+            new THREE.RingGeometry(0.1, 0.13, 40).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8 }),
+        );
+        reticle.matrixAutoUpdate = false;
+        reticle.visible = false;
+        scene.add(roomRoot, reticle);
+        roomTurn = 0;
+        return;
+    }
+    if (!roomRoot) return;
+    roomRoot.children.forEach((child) => {
+        if (child !== group) dispose(child as THREE.Mesh);
+    });
+    if (reticle) {
+        dispose(reticle);
+        scene.remove(reticle);
+    }
+    scene.remove(roomRoot);
+    roomRoot = null;
+    reticle = null;
+    roomFrameHook = null;
+    group.position.set(0, 0, 0);
+    targetRotY = DEFAULT_ROT_Y;
+    targetRotX = DEFAULT_ROT_X;
+    group.rotation.set(DEFAULT_ROT_X, DEFAULT_ROT_Y, 0);
+    scene.add(group);
+    resizeEngine();
+}
+
+/** Show the ring where the floor was found (a WebXR pose matrix), or hide it. */
+export function setReticle(matrix: Float32Array | null): void {
+    if (!reticle) return;
+    reticle.visible = matrix !== null;
+    if (matrix) reticle.matrix.fromArray(matrix);
+}
+
+/** Put the model where the ring is, turned to face the visitor. False if there is no ring. */
+export function placeRoomModel(): boolean {
+    if (!roomRoot || !reticle?.visible || !renderer || !camera) return false;
+    const spot = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
+    const eye = new THREE.Vector3().setFromMatrixPosition(renderer.xr.getCamera(camera).matrixWorld);
+    roomFacing = Math.atan2(eye.x - spot.x, eye.z - spot.z); // the model's front is +z
+    roomRoot.position.copy(spot);
+    roomRoot.rotation.set(0, roomFacing + roomTurn, 0);
+    roomRoot.visible = true;
+    return true;
+}
+
+export function setRoomScale(scale: number): void {
+    roomRoot?.scale.setScalar(scale);
+}
+
+export function rotateRoomModel(radians: number): void {
+    roomTurn += radians;
+    roomRoot?.rotation.set(0, roomFacing + roomTurn, 0);
+}
+
+/** Width of the current model in metres at a room scale. */
+export function roomModelWidth(scale: number): number {
+    return modelBox.getSize(new THREE.Vector3()).x * scale;
 }

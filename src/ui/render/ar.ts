@@ -3,8 +3,9 @@
 // "Collect your stamp" button on site, and the story card as a bottom sheet.
 import type { Hotspot } from '../../data/types';
 import { anchorBearingFor } from '../../features/ar/anchor';
+import { ROOM_SCALES } from '../../features/ar/room';
 import { render2dArchitecturalSvg } from '../../features/ar/svg2d';
-import { initEngine, projectHotspot, setAnchorBearing, setEngineActive, showModel } from '../../features/ar/three/engine';
+import { initEngine, projectHotspot, roomModelWidth, setAnchorBearing, setEngineActive, showModel } from '../../features/ar/three/engine';
 import { isOnSite } from '../../features/ar/verification';
 import { currentAssessment, currentExhibit, hotspotsFor } from '../../features/exhibits';
 import { memoryPinLabels } from '../../features/memories';
@@ -30,13 +31,17 @@ const PIN_OFF = 'bg-white/95 text-sky-700 border-2 border-sky-400';
 const CHIP = 'pointer-events-auto max-w-full flex items-center gap-2 h-9 pl-3 pr-1.5 rounded-2xl bg-white/95 backdrop-blur-md border shadow-sm text-left transition';
 const BADGE = 'shrink-0 px-2 py-0.5 rounded-lg border text-[11px] font-semibold';
 
+/** Room AR is running: pins and the story live in the full-screen overlay. */
+const inRoom = (s: Readonly<AppState>): boolean => s.roomAr === 'placed';
+
 function pins(s: Readonly<AppState>): Hotspot[] {
     return hotspotsFor(currentExhibit(s), s.lang, s.memories, memoryPinLabels);
 }
 
 function renderPins(s: Readonly<AppState>): void {
     const list = pins(s);
-    const is3d = s.dimension === '3d';
+    const room = inRoom(s);
+    const is3d = s.dimension === '3d' || room;
     const html = list
         .map((_h, i) => {
             const pos = is3d ? 'left:-100px;top:-100px;' : `left:${list[i].x};top:${list[i].y};`;
@@ -44,14 +49,17 @@ function renderPins(s: Readonly<AppState>): void {
         })
         .join('');
     setHtml('arPins2d', is3d ? '' : html);
-    setHtml('arPins3d', is3d ? html : '');
+    setHtml('arPins3d', is3d && !room ? html : '');
+    setHtml('xrPins', room ? html : '');
     if (is3d) positionPins3d();
 }
 
 /** Called by the 3D engine after every frame. */
 function positionPins3d(): void {
-    if (getState().dimension !== '3d') return;
-    $('arPins3d')
+    const s = getState();
+    const room = inRoom(s);
+    if (s.dimension !== '3d' && !room) return;
+    $(room ? 'xrPins' : 'arPins3d')
         ?.querySelectorAll<HTMLElement>('[data-pin]')
         .forEach((el) => {
             const p = projectHotspot(Number(el.dataset.pin));
@@ -177,9 +185,7 @@ function renderStory(s: Readonly<AppState>): void {
     if (!h) return;
     const nav = (dir: 'chevronLeft' | 'chevronRight', delta: number): string =>
         `<button onclick="app.step(${delta}, ${list.length})" aria-label="${dir}" class="w-[34px] h-[34px] rounded-xl border border-sky-200 bg-sky-50 text-sky-700 flex items-center justify-center hover:bg-sky-100 transition">${icon(dir, 'w-4 h-4')}</button>`;
-    setHtml(
-        'arStory',
-        `<div class="flex items-start justify-between gap-2">
+    const html = `<div class="flex items-start justify-between gap-2">
             <span class="flex items-center gap-2.5 min-w-0">
                 <span class="shrink-0 w-[26px] h-[26px] rounded-full bg-sky-500 text-white text-xs font-semibold flex items-center justify-center">${s.hotspotIndex + 1}</span>
                 <span class="min-w-0">
@@ -190,8 +196,48 @@ function renderStory(s: Readonly<AppState>): void {
             <span class="flex gap-1 shrink-0">${nav('chevronLeft', -1)}${nav('chevronRight', 1)}</span>
         </div>
         <p class="text-[13px] leading-5 text-marble-muted">${escapeHtml(h.text)}</p>
-        <span class="inline-block px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-semibold">${t('nodeOf', { i: s.hotspotIndex + 1, n: list.length })}</span>`,
+        <span class="inline-block px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-semibold">${t('nodeOf', { i: s.hotspotIndex + 1, n: list.length })}</span>`;
+    setHtml('arStory', html);
+    setHtml('xrStory', html);
+}
+
+const ROOM_HINT = { off: '', unsupported: '', starting: 'roomStarting', searching: 'roomSearching', aiming: 'roomAiming', placed: 'roomPlaced' } as const;
+
+/** The "Place it in the room" button and the overlay shown during room AR. */
+function mountRoomAr(): void {
+    view(
+        (s) => [s.lang, s.roomAr],
+        (s) => {
+            setHidden('arPlaceBtn', s.roomAr === 'unsupported');
+            setHtml('arPlaceBtn', `${icon('box', 'w-[18px] h-[18px]')}${t('placeInRoom')}`);
+        },
     );
+    view(
+        (s) => [s.lang, s.roomAr, s.roomSize, s.exhibitId],
+        (s) => {
+            const running = s.roomAr !== 'off' && s.roomAr !== 'unsupported';
+            setHidden('xrOverlay', !running);
+            if (!running) return;
+            const hint = ROOM_HINT[s.roomAr];
+            setText('xrHint', hint ? t(hint) : '');
+            setText('xrTitle', currentExhibit(s)[s.lang].title);
+            setHtml('xrExitIcon', icon('x', 'w-4 h-4'));
+            setText('xrExitText', t('roomExit'));
+            setHidden('xrTools', s.roomAr !== 'placed');
+            setHidden('xrStory', s.roomAr !== 'placed');
+            const metres = roomModelWidth(ROOM_SCALES[s.roomSize] ?? 1);
+            setHtml('xrSizeBtn', `${icon('resize', 'w-4 h-4')}${t('roomSize', { m: metres < 1 ? metres.toFixed(1) : Math.round(metres) })}`);
+            const rotate = t('roomRotate');
+            setHtml('xrRotL', icon('rotateLeft', 'w-[18px] h-[18px]'));
+            setHtml('xrRotR', icon('rotateRight', 'w-[18px] h-[18px]'));
+            $('xrRotL')?.setAttribute('aria-label', rotate);
+            $('xrRotR')?.setAttribute('aria-label', rotate);
+        },
+    );
+    // A tap on a button or card must not also move the model in the room.
+    $('xrOverlay')?.addEventListener('beforexrselect', (e) => {
+        if ((e.target as Element | null)?.closest('button, #xrStory')) e.preventDefault();
+    });
 }
 
 export function mountAr(): void {
@@ -291,7 +337,7 @@ export function mountAr(): void {
 
     // pins + story sheet
     view(
-        (s) => [s.lang, s.exhibitId, s.hotspotIndex, s.dimension, s.memories],
+        (s) => [s.lang, s.exhibitId, s.hotspotIndex, s.dimension, s.memories, inRoom(s)],
         (s) => {
             if (s.hotspotIndex > pins(s).length - 1) {
                 setState({ hotspotIndex: 0 });
@@ -310,4 +356,6 @@ export function mountAr(): void {
     );
     view((s) => [s.offTargetOverlay, s.lang, s.exhibitId, s.coords, s.accuracy, s.heading], renderOverlay);
     view((s) => [s.lang, s.exhibitId, s.stamps, s.gps, s.coords, s.accuracy, s.heading], renderCollect);
+
+    mountRoomAr();
 }
