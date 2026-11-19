@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AthenAR</string>
+    <string name="title_activity_main">AthenAR</string>
+    <string name="package_name">gr.athenar.app</string>
+    <string name="custom_url_scheme">gr.athenar.app</string>
+</resources>
