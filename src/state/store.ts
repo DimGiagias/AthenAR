@@ -20,6 +20,8 @@ export type ImageArStatus = 'off' | 'loading' | 'scanning' | 'tracking' | 'holdi
  * the floor, floor found (tap to place), or model placed.
  */
 export type RoomArStatus = 'unsupported' | 'off' | 'starting' | 'searching' | 'aiming' | 'placed';
+/** How Live AR anchors the model: to the real building, the floor, or a picture. */
+export type ArMode = 'street' | 'room' | 'image';
 
 export interface AppState {
     // language & audio guide
@@ -39,9 +41,7 @@ export interface AppState {
 
     // AR viewport
     arEra: ArEra;
-    dimension: '2d' | '3d';
-    xray: boolean;
-    timelapse: boolean;
+    arMode: ArMode;
     camera: CameraStatus;
     imageAr: ImageArStatus;
     /** Exhibit of the image last found by image AR, or null. */
@@ -96,9 +96,7 @@ let state: AppState = {
     hotspotIndex: 0,
 
     arEra: 'today',
-    dimension: '2d',
-    xray: false,
-    timelapse: false,
+    arMode: 'street',
     camera: 'off',
     imageAr: 'off',
     imageArExhibit: null,

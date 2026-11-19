@@ -15,8 +15,8 @@ import { getState, setState, watch } from '../../state/store';
 import { t } from '../../ui/i18n';
 import { getExhibit } from '../exhibits';
 import { showToast } from '../toast';
+import { setArCamera } from './controls';
 import { setImageTracking, setTrackedPose } from './three/engine';
-import { toggleCamera } from './controls';
 
 let session: TrackerSession | null = null;
 /** Increases on every start/stop, so a slow start that was cancelled does nothing. */
@@ -36,9 +36,9 @@ async function startImageAr(): Promise<void> {
     const mine = ++run;
     void startCompass(); // inside the tap: lets iOS ask for motion access
     startMotion();
-    setState({ imageAr: 'loading', imageArExhibit: null, dimension: '3d' });
+    setState({ imageAr: 'loading', imageArExhibit: null });
 
-    if (getState().camera !== 'live') await toggleCamera();
+    await setArCamera(true);
     const stream = getCameraStream();
     if (getState().camera !== 'live' || !stream) {
         if (mine === run) setState({ imageAr: 'off' });
@@ -97,12 +97,12 @@ export function stopImageAr(): void {
     if (getState().imageAr !== 'off') setState({ imageAr: 'off', imageArExhibit: null });
 }
 
-/** Stop when the camera goes off, the view goes 2D or the visitor leaves the AR tab (saves battery). */
+/** Stop when the camera goes off, as it does when the visitor leaves Live AR (saves battery). */
 export function initImageAr(): void {
     watch(
-        (s) => [s.camera, s.tab, s.dimension],
+        (s) => [s.camera],
         (s) => {
-            if (s.imageAr !== 'off' && s.imageAr !== 'loading' && (s.camera !== 'live' || s.tab !== 'ar' || s.dimension !== '3d')) stopImageAr();
+            if (s.imageAr !== 'off' && s.imageAr !== 'loading' && s.camera !== 'live') stopImageAr();
         },
     );
 }

@@ -192,80 +192,48 @@
             </nav>
 
             <!-- ============================== LIVE AR (full screen) -->
-            <section id="scr-ar" class="hidden absolute inset-0 z-30 overflow-hidden bg-gradient-to-b from-[#E0F2FE] via-[#F0F7FF] to-[#F8FAFC]">
+            <section id="scr-ar" class="hidden absolute inset-0 z-30 overflow-hidden bg-slate-900 text-white">
                 <video id="arVideo" autoplay playsinline muted class="hidden absolute inset-0 w-full h-full object-cover"></video>
-                <div id="arSimBackdrop" class="hidden absolute inset-0 bg-gradient-to-b from-slate-900/80 via-sky-950/70 to-slate-900/85 pointer-events-none">
+                <div id="arSimBackdrop" class="hidden absolute inset-0 bg-gradient-to-b from-slate-800 via-sky-950 to-slate-900 pointer-events-none">
                     <div class="w-full h-full opacity-25" style="background-image: radial-gradient(#38BDF8 1px, transparent 1px); background-size: 18px 18px;"></div>
                 </div>
-                <div id="arScanner" class="hidden absolute inset-0 z-[6] pointer-events-none"><div class="ai-laser-line"></div></div>
-
-                <div class="relative z-10 h-full flex flex-col pointer-events-none">
-                    <div class="shrink-0 px-3 pt-3 space-y-2">
-                        <div class="flex items-center gap-2 pointer-events-auto">
-                            <button onclick="app.closeAr()" aria-label="Close AR" class="shrink-0 w-11 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-marble-ink flex items-center justify-center hover:bg-sky-50 transition">
-                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                            </button>
-                            <div class="flex-1 min-w-0 px-3 py-1.5 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
-                                <div class="flex items-center gap-1.5 min-w-0">
-                                    <span id="arNum" class="text-[10px] font-semibold uppercase tracking-[0.1em] text-sky-600 truncate"></span>
-                                    <span id="arModePill" class="shrink-0 px-1.5 py-px rounded bg-sky-100 text-sky-700 text-[10px] font-semibold"></span>
-                                </div>
-                                <div id="arTitle" class="text-sm font-semibold text-marble-ink truncate"></div>
-                            </div>
-                            <div class="shrink-0 flex p-0.5 rounded-2xl bg-marble-subtle border border-sky-200">
-                                <button id="arDim-2d" onclick="app.dim('2d')">2D</button>
-                                <button id="arDim-3d" onclick="app.dim('3d')">3D</button>
-                            </div>
-                        </div>
-                        <div class="flex"><button id="arLock" onclick="app.scan()"></button></div>
-                    </div>
-
-                    <div class="ar-stage relative flex-1 min-h-0 flex items-center justify-center">
-                        <div id="arDrawingBox" class="ar-drawing-box">
-                            <div id="arDrawing" class="absolute inset-0 transition-all duration-500 era-filter-today"></div>
-                            <div id="arPins2d" class="absolute inset-0 pointer-events-none"></div>
-                        </div>
-                        <!-- 3D hologram: same frame as the 2D drawing (the 3D camera is set up for it);
-                             the camera feed stays full screen behind it -->
-                        <div id="arThreeBox" class="hidden ar-drawing-box pointer-events-auto">
-                            <div id="arThree" class="absolute inset-0 cursor-grab active:cursor-grabbing"></div>
-                            <div id="arPins3d" class="absolute inset-0 pointer-events-none"></div>
-                        </div>
-                        <div id="ar3dHint" class="hidden absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/85 backdrop-blur-md text-white border border-sky-400/40 px-3 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 shadow-sm">
-                            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span><span id="ar3dHintText"></span>
-                        </div>
-                    </div>
-
-                    <div class="shrink-0 pointer-events-auto">
-                        <div class="px-3 pb-2 space-y-2">
-                            <button id="arPlaceBtn" onclick="app.placeInRoom()" class="hidden w-full h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-sky-300 text-sky-700 text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:bg-sky-50 transition"></button>
-                            <div id="arCollect"></div>
-                            <div class="h-12 p-[5px] rounded-2xl bg-white/95 backdrop-blur-md border border-sky-200 shadow-sm flex items-center gap-1">
-                                <span class="shrink-0 flex items-center gap-1 pl-2 pr-1.5 text-[11px] font-semibold text-marble-muted">
-                                    <svg class="w-3.5 h-3.5 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-                                    <span id="arEraLabel"></span>
-                                </span>
-                                <div class="flex-1 grid grid-cols-3 gap-1">
-                                    <button id="arEra-1900" onclick="app.era('1900')">1900–1935</button>
-                                    <button id="arEra-1950" onclick="app.era('1950')">1950–1975</button>
-                                    <button id="arEra-today" onclick="app.era('today')"><span id="arEra-todayText"></span></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="arStory" class="bg-white rounded-t-3xl border-t border-sky-200 shadow-[0_-8px_24px_rgba(2,132,199,0.1)] p-4 space-y-2 max-h-[34vh] overflow-y-auto mobile-scroll"></div>
+                <div id="arThree" class="absolute inset-0"></div>
+                <div id="arPins3d" class="absolute inset-0 pointer-events-none"></div>
+                <div id="arScanner" class="hidden absolute inset-0 pointer-events-none"><div class="ai-laser-line"></div></div>
+                <!-- Picture mode: where to aim -->
+                <div id="arTarget" class="hidden absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div class="relative w-[68%] max-w-[300px] aspect-[4/3]">
+                        <span class="absolute left-0 top-0 w-9 h-9 border-l-4 border-t-4 border-sky-400 rounded-tl-2xl"></span>
+                        <span class="absolute right-0 top-0 w-9 h-9 border-r-4 border-t-4 border-sky-400 rounded-tr-2xl"></span>
+                        <span class="absolute left-0 bottom-0 w-9 h-9 border-l-4 border-b-4 border-sky-400 rounded-bl-2xl"></span>
+                        <span class="absolute right-0 bottom-0 w-9 h-9 border-r-4 border-b-4 border-sky-400 rounded-br-2xl"></span>
                     </div>
                 </div>
 
-                <div class="absolute right-3 top-[112px] z-20 flex flex-col items-end gap-1.5">
-                    <button id="arCamBtn" onclick="app.camera()"></button>
-                    <div id="ar3dTools" class="hidden flex flex-col items-end gap-1.5">
-                        <button onclick="app.timelapse()" class="h-9 px-3 rounded-xl border bg-sky-600 border-sky-400 text-white text-[11px] font-semibold shadow-sm hover:bg-sky-500 transition"><span id="arTimelapseText"></span></button>
-                        <button id="arXray" onclick="app.xray()">X-Ray</button>
-                        <div class="flex flex-col bg-white/95 border border-sky-200 rounded-xl shadow-sm overflow-hidden">
-                            <button onclick="app.zoom3d(-1.1)" aria-label="Zoom in" class="w-9 h-8 border-b border-sky-100 text-sky-700 text-sm font-semibold hover:bg-sky-50">+</button>
-                            <button onclick="app.zoom3d(1.1)" aria-label="Zoom out" class="w-9 h-8 text-sky-700 text-sm font-semibold hover:bg-sky-50">−</button>
+                <!-- top: close, exhibit, audio guide; the lock chip in street mode -->
+                <div class="absolute inset-x-0 top-0 p-3 space-y-2" style="padding-top: max(12px, env(safe-area-inset-top))">
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.closeAr()" id="arClose" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
+                        <div class="glass flex-1 min-w-0 h-11 px-4 rounded-full flex items-center gap-2">
+                            <span id="arNum" class="shrink-0 text-[11px] font-semibold text-sky-300"></span>
+                            <span id="arTitle" class="min-w-0 truncate text-[13px] font-semibold"></span>
                         </div>
+                        <button onclick="app.audio()" id="arAudio" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
                     </div>
+                    <div id="arLockRow" class="hidden flex"><button id="arLock" onclick="app.scan()"></button></div>
+                </div>
+
+                <!-- time dial -->
+                <div id="arDial" class="absolute right-3 top-[28%]"></div>
+
+                <!-- bottom: hint, modes, the big button; or the story card -->
+                <div class="absolute inset-x-0 bottom-0 px-3 flex flex-col items-center gap-3" style="padding-bottom: max(20px, env(safe-area-inset-bottom))">
+                    <div id="arControls" class="w-full flex flex-col items-center gap-3">
+                        <span id="arHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
+                        <div id="arModes" class="flex items-center gap-5"></div>
+                        <div id="arShutter"></div>
+                    </div>
+                    <div id="arStory" class="hidden w-full glass-light text-marble-ink rounded-3xl shadow-2xl p-4 space-y-2 max-h-[42vh] overflow-y-auto mobile-scroll"></div>
                 </div>
 
                 <div id="arOverlay" class="hidden absolute inset-x-3 top-1/2 -translate-y-1/2 z-30"></div>
@@ -312,22 +280,29 @@
     </div>
 
     <!-- Room AR (WebXR): shown over the camera view while the session runs -->
-    <div id="xrOverlay" class="hidden fixed inset-0 z-[100] pointer-events-none">
+    <div id="xrOverlay" class="hidden fixed inset-0 z-[100] pointer-events-none text-white font-sans">
         <div id="xrPins" class="absolute inset-0"></div>
         <div class="absolute inset-x-0 top-0 p-3 flex items-center gap-2" style="padding-top: max(12px, env(safe-area-inset-top))">
-            <button onclick="app.exitRoom()" class="pointer-events-auto shrink-0 h-11 px-4 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-marble-ink text-sm font-semibold flex items-center gap-1.5"><span id="xrExitIcon"></span><span id="xrExitText"></span></button>
-            <div class="flex-1 min-w-0 px-3 py-2 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
-                <div id="xrTitle" class="text-sm font-semibold text-marble-ink truncate"></div>
+            <button onclick="app.exitRoom()" id="xrExit" class="glass pointer-events-auto shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
+            <div class="glass flex-1 min-w-0 h-11 px-4 rounded-full flex items-center gap-2">
+                <span id="xrNum" class="shrink-0 text-[11px] font-semibold text-sky-300"></span>
+                <span id="xrTitle" class="min-w-0 truncate text-[13px] font-semibold"></span>
             </div>
         </div>
-        <div class="absolute inset-x-0 bottom-0 p-3 space-y-2" style="padding-bottom: max(12px, env(safe-area-inset-bottom))">
-            <div class="flex justify-center"><span id="xrHint" class="max-w-full px-3.5 py-2 rounded-2xl bg-slate-900/85 backdrop-blur-md text-white text-[13px] font-semibold text-center shadow-lg"></span></div>
-            <div id="xrStory" class="hidden pointer-events-auto bg-white rounded-3xl border border-sky-200 shadow-lg p-4 space-y-2 max-h-[30vh] overflow-y-auto mobile-scroll"></div>
-            <div id="xrTools" class="hidden pointer-events-auto flex items-center gap-2">
-                <button id="xrSizeBtn" onclick="app.roomSize()" class="flex-1 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-sky-700 text-sm font-semibold flex items-center justify-center gap-1.5"></button>
-                <button id="xrRotL" onclick="app.roomRotate(-15)" class="w-11 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-sky-700 flex items-center justify-center"></button>
-                <button id="xrRotR" onclick="app.roomRotate(15)" class="w-11 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-sky-700 flex items-center justify-center"></button>
+        <div id="xrCoach" class="hidden absolute inset-x-0 top-[34%] flex justify-center">
+            <div class="coach-phone w-14 h-24 rounded-2xl border-4 border-white/90 bg-white/10 shadow-xl"></div>
+        </div>
+        <div id="xrDial" class="hidden pointer-events-auto absolute right-3 top-[28%]"></div>
+        <div class="absolute inset-x-0 bottom-0 px-3 flex flex-col items-center gap-3" style="padding-bottom: max(20px, env(safe-area-inset-bottom))">
+            <div id="xrControls" class="w-full flex flex-col items-center gap-3">
+                <span id="xrHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
+                <div id="xrTools" class="hidden pointer-events-auto flex items-center gap-3">
+                    <button id="xrSizeBtn" onclick="app.roomSize()" class="glass h-11 px-4 rounded-full text-[13px] font-semibold flex items-center gap-1.5"></button>
+                    <button id="xrRotL" onclick="app.roomRotate(-15)" class="glass w-11 h-11 rounded-full flex items-center justify-center"></button>
+                    <button id="xrRotR" onclick="app.roomRotate(15)" class="glass w-11 h-11 rounded-full flex items-center justify-center"></button>
+                </div>
             </div>
+            <div id="xrStory" class="hidden pointer-events-auto w-full glass-light text-marble-ink rounded-3xl shadow-2xl p-4 space-y-2 max-h-[40vh] overflow-y-auto mobile-scroll"></div>
         </div>
     </div>
 

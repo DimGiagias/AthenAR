@@ -2,16 +2,17 @@
 // (onclick="app.openExhibit(3)"); main.ts puts this object on window.app.
 import { exhibitsData } from '../data/exhibits';
 import type { ArEra, CorridorId, EraRoom, Lang } from '../data/types';
-import { scanLock, simulateWrongBuilding, stopTimelapse, toggleCamera, toggleTimelapse } from '../features/ar/controls';
+import { defaultArMode, scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
+import { stopImageAr, toggleImageAr } from '../features/ar/imageAr';
 import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar/room';
-import { zoomBy } from '../features/ar/three/engine';
+import { isOnSite } from '../features/ar/verification';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
-import { getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
+import { currentAssessment, getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
 import { toggleDemoMode } from '../features/location';
 import { deleteMemory, MAX_AUTHOR_CHARS, MAX_STORY_CHARS, memoryPinLabels, submitMemory } from '../features/memories';
 import { collectStamp } from '../features/stamps';
 import { showToast } from '../features/toast';
-import { getState, setState } from '../state/store';
+import { getState, setState, type ArMode } from '../state/store';
 import { t } from './i18n';
 import { focusStreetMapOn, zoomStreetMap } from './map/streetMap';
 import { getUi, setUi } from './state';
@@ -25,8 +26,8 @@ function selectExhibit(id: number): void {
 }
 
 function stopArExtras(): void {
-    if (getState().camera !== 'off') void toggleCamera(); // also stops the timelapse
-    else if (getState().timelapse) stopTimelapse();
+    stopImageAr();
+    void setArCamera(false);
     setState({ offTargetOverlay: false });
 }
 
@@ -59,8 +60,10 @@ export const app = {
     },
     openAr(hotspotIndex?: number): void {
         if (typeof hotspotIndex === 'number') setState({ hotspotIndex });
+        wakeCompass(); // inside the tap: lets iOS ask for motion access
         const u = getUi();
-        setUi({ screen: 'ar', arBack: u.screen === 'ar' ? u.arBack : u.screen });
+        if (u.screen !== 'ar') setState({ arMode: defaultArMode(getState()) });
+        setUi({ screen: 'ar', arBack: u.screen === 'ar' ? u.arBack : u.screen, story: typeof hotspotIndex === 'number' });
     },
     /** Bottom bar "Live AR": the nearest exhibit when GPS knows where you are. */
     liveAr(): void {
@@ -105,21 +108,21 @@ export const app = {
     speed: toggleAudioSpeed,
 
     // --- AR ---
-    dim(dimension: '2d' | '3d'): void {
-        setState({ dimension });
+    arMode(mode: ArMode): void {
+        if (mode === getState().arMode) return;
+        stopImageAr();
+        setState({ arMode: mode, offTargetOverlay: false });
+    },
+    /** The big round button: the next step in the current AR mode. */
+    shutter(): void {
+        const s = getState();
+        if (s.arMode === 'room') placeInRoom();
+        else if (s.arMode === 'image') void toggleImageAr();
+        else if (s.stamps[s.exhibitId] === undefined && isOnSite(currentAssessment(s))) void collectStamp();
+        else void scanLock();
     },
     era(era: ArEra): void {
         setState({ arEra: era });
-    },
-    camera(): void {
-        void toggleCamera();
-    },
-    timelapse: toggleTimelapse,
-    xray(): void {
-        setState({ xray: !getState().xray });
-    },
-    zoom3d(delta: number): void {
-        zoomBy(delta);
     },
     scan(): void {
         void scanLock();
@@ -127,14 +130,20 @@ export const app = {
     dismissOverlay(): void {
         setState({ offTargetOverlay: false });
     },
-    view3d(): void {
-        setState({ offTargetOverlay: false, dimension: '3d' });
+    /** From the "too far" card: see the model here instead, in the room or on the picture. */
+    seeModel(): void {
+        stopImageAr();
+        setState({ offTargetOverlay: false, arMode: getState().roomAr !== 'unsupported' ? 'room' : 'image' });
     },
     collect(): void {
         void collectStamp();
     },
     pin(index: number): void {
         setState({ hotspotIndex: index });
+        setUi({ story: true });
+    },
+    closeStory(): void {
+        setUi({ story: false });
     },
     step(delta: number, total: number): void {
         if (total < 1) return;

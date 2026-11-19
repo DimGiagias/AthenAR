@@ -29,8 +29,6 @@ const HOTSPOT_ANCHORS: Array<[number, number, number]> = [
 const AUTO_SPIN_PER_FRAME = 0.0032;
 const DEFAULT_ROT_Y = 0.55;
 const DEFAULT_ROT_X = 0.18;
-const ZOOM_MIN = 6.5;
-const ZOOM_MAX = 16.0;
 /**
  * Anchored mode: how much the virtual camera turns per degree the phone
  * turns. Below 1 because the phone camera sees a wider angle than the 40°
@@ -43,8 +41,6 @@ const DEG = Math.PI / 180;
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 /** Image-anchored: start slightly turned so the model reads as 3D, not a flat facade. */
 const TRACKED_ROT_Y = 0.4;
-const TRACKED_ZOOM_MIN = 0.4;
-const TRACKED_ZOOM_MAX = 2.5;
 /**
  * Smoothing of the tracked pose. The tracker reports 10-30 slightly noisy
  * poses a second; the model eases towards the latest one every frame. When
@@ -85,7 +81,7 @@ let prevX = 0;
 let prevY = 0;
 let targetRotY = DEFAULT_ROT_Y;
 let targetRotX = DEFAULT_ROT_X;
-let zoomDist = 11.2;
+const zoomDist = 11.2;
 
 let active = false;
 let onFrame: (() => void) | null = null;
@@ -389,19 +385,18 @@ export function setEngineActive(on: boolean): void {
     if (on) resizeEngine();
 }
 
-export function showModel(exhibit: Exhibit, era: string, xray: boolean): void {
+export function showModel(exhibit: Exhibit, era: string): void {
     if (!group) return;
-    smoke = buildMonumentMesh(group, exhibit, era, xray);
+    smoke = buildMonumentMesh(group, exhibit, era, false);
     measureModel();
+    if (roomRoot) standOnFloor();
 }
 
-/** Zoom buttons: move the camera, or on a tracked image, resize the model. */
-export function zoomBy(delta: number): void {
-    if (tracking) {
-        trackedZoom = Math.max(TRACKED_ZOOM_MIN, Math.min(TRACKED_ZOOM_MAX, trackedZoom * (delta < 0 ? 1.15 : 1 / 1.15)));
-        return;
-    }
-    zoomDist = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomDist + delta));
+/** Room mode: the model centred on its spot, its base on the floor. */
+function standOnFloor(): void {
+    if (!group) return;
+    const centre = modelBox.getCenter(new THREE.Vector3());
+    group.position.set(-centre.x, -modelBox.min.y, -centre.z);
 }
 
 /**
@@ -462,7 +457,9 @@ function animate(_time: number, frame?: XRFrame): void {
         return;
     }
 
-    camera.position.z += (zoomDist - camera.position.z) * 0.12;
+    // A tall, narrow screen sees less width: step back so the whole building fits.
+    const fit = 1 / Math.min(1, Math.max(camera.aspect, 0.55));
+    camera.position.z += (zoomDist * fit - camera.position.z) * 0.12;
     camera.lookAt(0, 1.25, 0);
 
     // Direction anchoring: turn the virtual camera by how far the phone is
@@ -564,9 +561,7 @@ export function setRoomMode(on: boolean, scale = 1): void {
         roomRoot = new THREE.Group();
         roomRoot.visible = false;
         roomRoot.scale.setScalar(scale);
-        const centre = modelBox.getCenter(new THREE.Vector3());
         group.rotation.set(0, 0, 0);
-        group.position.set(-centre.x, -modelBox.min.y, -centre.z);
         roomRoot.add(group, makeContactShadow());
         reticle = new THREE.Mesh(
             new THREE.RingGeometry(0.1, 0.13, 40).rotateX(-Math.PI / 2),
@@ -575,6 +570,7 @@ export function setRoomMode(on: boolean, scale = 1): void {
         reticle.matrixAutoUpdate = false;
         reticle.visible = false;
         scene.add(roomRoot, reticle);
+        standOnFloor();
         roomTurn = 0;
         return;
     }

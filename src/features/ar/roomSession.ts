@@ -5,7 +5,7 @@ import type { XRFrame, XRHitTestSource, XRSession, XRSessionInit } from 'three/s
 import { getState, setState, type RoomArStatus } from '../../state/store';
 import { t } from '../../ui/i18n';
 import { showToast } from '../toast';
-import { toggleCamera } from './controls';
+import { setArCamera } from './controls';
 import { ROOM_SCALES, webXr } from './room';
 import { getRenderer, placeRoomModel, setReticle, setRoomFrameHook, setRoomMode } from './three/engine';
 
@@ -25,7 +25,7 @@ export async function startRoomAr(): Promise<void> {
     if (!xr || !renderer || session) return;
     setStatus('starting');
     // ARCore needs the camera for itself.
-    if (getState().camera !== 'off') await toggleCamera();
+    await setArCamera(false);
 
     const options = {
         requiredFeatures: ['hit-test'],

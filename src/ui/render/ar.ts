@@ -1,65 +1,64 @@
-// Live AR, full screen: the 2D drawing or 3D hologram (camera behind it
-// when on), a compact lock chip, the off-target card, the era bar, a large
-// "Collect your stamp" button on site, and the story card as a bottom sheet.
-import type { Hotspot } from '../../data/types';
+// Live AR, full screen: the camera is the screen. Glass controls float over it:
+// the exhibit at the top, a time dial on the right edge, and at the bottom a
+// hint, the AR modes (street / room / picture) and one big button that does
+// the next step in the current mode. Pins on the model open a story card.
+// While room AR runs, the same controls live in the WebXR overlay (xr*).
+import type { ArEra, Hotspot } from '../../data/types';
 import { anchorBearingFor } from '../../features/ar/anchor';
+import { setArCamera } from '../../features/ar/controls';
 import { ROOM_SCALES } from '../../features/ar/room';
-import { render2dArchitecturalSvg } from '../../features/ar/svg2d';
 import { initEngine, projectHotspot, roomModelWidth, setAnchorBearing, setEngineActive, showModel } from '../../features/ar/three/engine';
 import { isOnSite } from '../../features/ar/verification';
 import { currentAssessment, currentExhibit, hotspotsFor } from '../../features/exhibits';
 import { memoryPinLabels } from '../../features/memories';
 import { getCameraStream } from '../../platform/camera';
-import { getState, setState, type AppState } from '../../state/store';
+import { getState, setState, type AppState, type ArMode } from '../../state/store';
 import { $, setClass, setHidden, setHtml, setText } from '../dom';
 import { escapeHtml } from '../escapeHtml';
-import { t } from '../i18n';
-import { icon } from '../icons';
-import { dist, PRIMARY } from '../shared';
+import { t, type StringKey } from '../i18n';
+import { icon, type IconName } from '../icons';
+import { dist } from '../shared';
 import { view } from '../state';
 
-const DIM_ON = 'h-10 px-2.5 rounded-[13px] text-xs font-extrabold bg-white text-sky-700 shadow-sm transition';
-const DIM_OFF = 'h-10 px-2.5 rounded-[13px] text-xs font-bold text-marble-muted hover:text-marble-ink transition';
-const ERA_ON = 'h-9 rounded-xl text-xs font-extrabold bg-sky-600 text-white shadow-sm transition';
-const ERA_OFF = 'h-9 rounded-xl text-xs font-bold text-marble-muted hover:text-marble-ink transition';
-const TOOL = 'h-9 px-3 rounded-xl border text-[11px] font-semibold shadow-sm flex items-center gap-1.5 transition';
-const TOOL_WHITE = `${TOOL} bg-white/95 border-sky-200 text-sky-700 hover:bg-sky-50`;
-const TOOL_BLUE = `${TOOL} bg-sky-600 border-sky-400 text-white hover:bg-sky-500`;
 const PIN_BASE = 'ar-node-pin pointer-events-auto absolute w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition shadow-lg';
-const PIN_ON = 'bg-sky-600 text-white border-4 border-white';
-const PIN_OFF = 'bg-white/95 text-sky-700 border-2 border-sky-400';
+const PIN_ON = 'bg-sky-500 text-white border-[3px] border-white';
+const PIN_OFF = 'bg-white text-sky-700 border-2 border-sky-400';
 const CHIP = 'pointer-events-auto max-w-full flex items-center gap-2 h-9 pl-3 pr-1.5 rounded-2xl bg-white/95 backdrop-blur-md border shadow-sm text-left transition';
 const BADGE = 'shrink-0 px-2 py-0.5 rounded-lg border text-[11px] font-semibold';
 
-/** Room AR is running: pins and the story live in the full-screen overlay. */
+const MODES: Array<{ mode: ArMode; label: StringKey }> = [
+    { mode: 'street', label: 'modeStreet' },
+    { mode: 'room', label: 'modeRoom' },
+    { mode: 'image', label: 'modeImage' },
+];
+/** Top to bottom on the time dial. */
+const ERAS: ArEra[] = ['today', '1950', '1900'];
+
+const roomRunning = (s: Readonly<AppState>): boolean => s.roomAr !== 'off' && s.roomAr !== 'unsupported';
+/** Room AR has the model on the floor: pins and the story live in the WebXR overlay. */
 const inRoom = (s: Readonly<AppState>): boolean => s.roomAr === 'placed';
+/** Picture mode before the picture has been found: only the aiming frame shows. */
+const aiming = (s: Readonly<AppState>): boolean => s.arMode === 'image' && (s.imageAr === 'off' || s.imageAr === 'loading' || s.imageAr === 'scanning');
+
+const exhibitNum = (s: Readonly<AppState>): string => `#${String(currentExhibit(s).num).padStart(2, '0')}`;
 
 function pins(s: Readonly<AppState>): Hotspot[] {
     return hotspotsFor(currentExhibit(s), s.lang, s.memories, memoryPinLabels);
 }
 
 function renderPins(s: Readonly<AppState>): void {
-    const list = pins(s);
     const room = inRoom(s);
-    const is3d = s.dimension === '3d' || room;
-    const html = list
-        .map((_h, i) => {
-            const pos = is3d ? 'left:-100px;top:-100px;' : `left:${list[i].x};top:${list[i].y};`;
-            return `<button onclick="app.pin(${i})" data-pin="${i}" style="${pos}" class="${PIN_BASE} ${i === s.hotspotIndex ? PIN_ON : PIN_OFF}">${i + 1}</button>`;
-        })
+    const html = pins(s)
+        .map((_h, i) => `<button onclick="app.pin(${i})" data-pin="${i}" style="left:-100px;top:-100px;" class="${PIN_BASE} ${i === s.hotspotIndex ? PIN_ON : PIN_OFF}">${i + 1}</button>`)
         .join('');
-    setHtml('arPins2d', is3d ? '' : html);
-    setHtml('arPins3d', is3d && !room ? html : '');
+    setHtml('arPins3d', room || aiming(s) ? '' : html);
     setHtml('xrPins', room ? html : '');
-    if (is3d) positionPins3d();
+    positionPins();
 }
 
 /** Called by the 3D engine after every frame. */
-function positionPins3d(): void {
-    const s = getState();
-    const room = inRoom(s);
-    if (s.dimension !== '3d' && !room) return;
-    $(room ? 'xrPins' : 'arPins3d')
+function positionPins(): void {
+    $(inRoom(getState()) ? 'xrPins' : 'arPins3d')
         ?.querySelectorAll<HTMLElement>('[data-pin]')
         .forEach((el) => {
             const p = projectHotspot(Number(el.dataset.pin));
@@ -68,6 +67,52 @@ function positionPins3d(): void {
             el.style.top = `${p.y.toFixed(1)}px`;
             el.style.visibility = p.visible ? 'visible' : 'hidden';
         });
+}
+
+function dialHtml(s: Readonly<AppState>): string {
+    const stops = ERAS.map((era) => {
+        const on = era === s.arEra;
+        const label = era === 'today' ? t('eraToday') : era;
+        return `<button onclick="app.era('${era}')" class="w-12 h-12 rounded-full text-[11px] font-semibold transition ${on ? 'bg-sky-500 text-white shadow-lg' : 'text-white/75 hover:text-white'}">${label}</button>`;
+    }).join('');
+    return `<div class="glass rounded-full p-1.5 flex flex-col items-center gap-1">${stops}<span class="pb-1.5 pt-0.5 text-[9px] font-semibold tracking-[0.14em] text-sky-200">${t('arTime')}</span></div>`;
+}
+
+function modesHtml(s: Readonly<AppState>): string {
+    return MODES.filter((m) => m.mode !== 'room' || s.roomAr !== 'unsupported')
+        .map(({ mode, label }) => {
+            const on = mode === s.arMode;
+            return `<button onclick="app.arMode('${mode}')" class="px-1 py-1 text-[11px] font-semibold tracking-[0.14em] transition ${on ? 'text-sky-300' : 'text-white/60 hover:text-white'}" style="text-shadow: 0 1px 4px rgba(0,0,0,.5)">${t(label)}</button>`;
+        })
+        .join('');
+}
+
+/** What the big button does now: its icon, label and whether it is busy. */
+function shutterFor(s: Readonly<AppState>): { glyph: IconName; label: string; busy: boolean } {
+    if (s.arMode === 'room') return { glyph: 'box', label: t('placeInRoom'), busy: s.roomAr === 'starting' };
+    if (s.arMode === 'image') {
+        return s.imageAr === 'off' ? { glyph: 'scanEye', label: t('modeImage'), busy: false } : { glyph: 'x', label: t('imageStop'), busy: s.imageAr === 'loading' };
+    }
+    if (s.stamps[s.exhibitId] !== undefined) return { glyph: 'check', label: t('collected'), busy: false };
+    if (isOnSite(currentAssessment(s))) return { glyph: 'award', label: t('collect'), busy: false };
+    return { glyph: 'target', label: t('bScan'), busy: s.scanning };
+}
+
+function shutterHtml(s: Readonly<AppState>): string {
+    const { glyph, label, busy } = shutterFor(s);
+    return `<button onclick="app.shutter()" aria-label="${label}" ${busy ? 'disabled' : ''} class="w-[76px] h-[76px] rounded-full border-4 border-white/90 flex items-center justify-center shadow-xl active:scale-95 transition ${busy ? 'opacity-60' : ''}">
+        <span class="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center ${busy ? 'animate-pulse' : ''}">${icon(glyph, 'w-7 h-7')}</span>
+    </button>`;
+}
+
+function hintFor(s: Readonly<AppState>): string {
+    if (s.arMode === 'room') return t(s.roomAr === 'starting' ? 'roomStarting' : 'hintRoom');
+    if (s.arMode === 'image') {
+        const keys = { off: 'hintImage', loading: 'hintImageLoading', scanning: 'hintImageScanning', tracking: 'hintImageTracking', holding: 'hintImageHolding' } as const;
+        return t(keys[s.imageAr]);
+    }
+    if (s.stamps[s.exhibitId] !== undefined) return t('collected');
+    return t(isOnSite(currentAssessment(s)) ? 'hintCollect' : 'hintStreet');
 }
 
 function renderLockChip(s: Readonly<AppState>): void {
@@ -89,15 +134,10 @@ function renderLockChip(s: Readonly<AppState>): void {
         text = t('lockNoGps');
         badge = amber(t('bNoGps'));
     } else if (lock.status !== 'no-fix' && lock.distance !== null) {
-        if (lock.status === 'locked') {
+        if (lock.status === 'locked' || lock.status === 'here') {
             border = 'border-emerald-200';
             dot = 'bg-emerald-500';
-            text = t('lockLocked', { score: lock.score });
-            badge = green;
-        } else if (lock.status === 'here') {
-            border = 'border-emerald-200';
-            dot = 'bg-emerald-500';
-            text = t('lockHere', { score: lock.score });
+            text = t(lock.status === 'locked' ? 'lockLocked' : 'lockHere', { score: lock.score });
             badge = green;
         } else if (lock.status === 'misaligned') {
             border = 'border-amber-200';
@@ -145,7 +185,7 @@ function renderOverlay(s: Readonly<AppState>): void {
         title = t('ovFarTitle', { dist: dist(lock.distance) });
         body = t('ovFarBody', { radius: lock.radius, title: ex[s.lang].title });
         buttons = `<button onclick="app.showOnMap()" class="h-11 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-[13px] font-semibold transition">${t('ovShowMap')}</button>
-            <button onclick="app.view3d()" class="h-11 px-4 rounded-2xl border border-white/30 bg-white/10 text-white text-[13px] font-semibold">${t('ov3d')}</button>`;
+            <button onclick="app.seeModel()" class="h-11 px-4 rounded-2xl border border-white/30 bg-white/10 text-white text-[13px] font-semibold">${t('ov3d')}</button>`;
     } else {
         const err = lock.headingError ?? 0;
         const side = t(err > 0 ? 'sideRight' : 'sideLeft');
@@ -168,118 +208,80 @@ function renderOverlay(s: Readonly<AppState>): void {
     );
 }
 
-function renderCollect(s: Readonly<AppState>): void {
-    const ex = currentExhibit(s);
-    if (s.stamps[ex.id] !== undefined) {
-        setHtml('arCollect', `<span class="mx-auto w-fit px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm">${icon('check', 'w-3.5 h-3.5', 2.6)}${t('collected')}</span>`);
-    } else if (isOnSite(currentAssessment(s))) {
-        setHtml('arCollect', `<button onclick="app.collect()" class="w-full h-[52px] rounded-2xl ${PRIMARY} text-[15px] font-semibold flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(37,99,235,0.3)] hover:opacity-95 transition">${icon('award', 'w-5 h-5')}+ ${t('collect')}</button>`);
-    } else {
-        setHtml('arCollect', '');
-    }
-}
-
-function renderStory(s: Readonly<AppState>): void {
+function storyHtml(s: Readonly<AppState>): string {
     const list = pins(s);
     const h = list[s.hotspotIndex] ?? list[0];
-    if (!h) return;
+    if (!h) return '';
     const nav = (dir: 'chevronLeft' | 'chevronRight', delta: number): string =>
         `<button onclick="app.step(${delta}, ${list.length})" aria-label="${dir}" class="w-[34px] h-[34px] rounded-xl border border-sky-200 bg-sky-50 text-sky-700 flex items-center justify-center hover:bg-sky-100 transition">${icon(dir, 'w-4 h-4')}</button>`;
-    const html = `<div class="flex items-start justify-between gap-2">
+    return `<div class="flex items-start justify-between gap-2">
             <span class="flex items-center gap-2.5 min-w-0">
-                <span class="shrink-0 w-[26px] h-[26px] rounded-full bg-sky-500 text-white text-xs font-semibold flex items-center justify-center">${s.hotspotIndex + 1}</span>
+                <span class="shrink-0 w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-semibold flex items-center justify-center">${s.hotspotIndex + 1}</span>
                 <span class="min-w-0">
                     <span class="block text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-600">${escapeHtml(h.type)}</span>
-                    <span class="block text-[15px] font-semibold leading-snug text-marble-ink">${escapeHtml(h.title)}</span>
+                    <span class="block text-[15px] font-semibold leading-snug">${escapeHtml(h.title)}</span>
                 </span>
             </span>
-            <span class="flex gap-1 shrink-0">${nav('chevronLeft', -1)}${nav('chevronRight', 1)}</span>
+            <button onclick="app.closeStory()" aria-label="${t('close')}" class="shrink-0 w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">${icon('x', 'w-4 h-4')}</button>
         </div>
         <p class="text-[13px] leading-5 text-marble-muted">${escapeHtml(h.text)}</p>
-        <span class="inline-block px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-semibold">${t('nodeOf', { i: s.hotspotIndex + 1, n: list.length })}</span>`;
-    setHtml('arStory', html);
-    setHtml('xrStory', html);
+        <div class="flex items-center justify-between gap-2">
+            ${nav('chevronLeft', -1)}
+            <span class="text-[11px] font-semibold text-slate-500">${t('nodeOf', { i: s.hotspotIndex + 1, n: list.length })}</span>
+            ${nav('chevronRight', 1)}
+        </div>`;
 }
 
-const ROOM_HINT = { off: '', unsupported: '', starting: 'roomStarting', searching: 'roomSearching', aiming: 'roomAiming', placed: 'roomPlaced' } as const;
-
-/** The "Place it in the room" button and the overlay shown during room AR. */
-function mountRoomAr(): void {
+/** The WebXR overlay while room AR runs: same look as the camera screen. */
+function mountRoomOverlay(): void {
+    const hints = { searching: 'roomSearching', aiming: 'roomAiming', placed: 'roomPlaced', starting: 'roomStarting' } as const;
     view(
-        (s) => [s.lang, s.roomAr],
-        (s) => {
-            setHidden('arPlaceBtn', s.roomAr === 'unsupported');
-            setHtml('arPlaceBtn', `${icon('box', 'w-[18px] h-[18px]')}${t('placeInRoom')}`);
-        },
-    );
-    view(
-        (s) => [s.lang, s.roomAr, s.roomSize, s.exhibitId],
-        (s) => {
-            const running = s.roomAr !== 'off' && s.roomAr !== 'unsupported';
-            setHidden('xrOverlay', !running);
-            if (!running) return;
-            const hint = ROOM_HINT[s.roomAr];
-            setText('xrHint', hint ? t(hint) : '');
+        (s, u) => [s.lang, s.roomAr, s.roomSize, s.exhibitId, s.arEra, s.hotspotIndex, s.memories, u.story],
+        (s, u) => {
+            setHidden('xrOverlay', !roomRunning(s));
+            if (s.roomAr === 'off' || s.roomAr === 'unsupported') return;
+            const placed = s.roomAr === 'placed';
+            const story = placed && u.story;
+            setText('xrNum', exhibitNum(s));
             setText('xrTitle', currentExhibit(s)[s.lang].title);
-            setHtml('xrExitIcon', icon('x', 'w-4 h-4'));
-            setText('xrExitText', t('roomExit'));
-            setHidden('xrTools', s.roomAr !== 'placed');
-            setHidden('xrStory', s.roomAr !== 'placed');
+            setHtml('xrExit', icon('x', 'w-5 h-5'));
+            $('xrExit')?.setAttribute('aria-label', t('roomExit'));
+            setText('xrHint', t(hints[s.roomAr]));
+            setHidden('xrCoach', s.roomAr !== 'searching');
+            setHidden('xrDial', !placed);
+            if (placed) setHtml('xrDial', dialHtml(s));
+            setHidden('xrTools', !placed);
+            setHidden('xrControls', story);
+            setHidden('xrStory', !story);
+            if (story) setHtml('xrStory', storyHtml(s));
             const metres = roomModelWidth(ROOM_SCALES[s.roomSize] ?? 1);
             setHtml('xrSizeBtn', `${icon('resize', 'w-4 h-4')}${t('roomSize', { m: metres < 1 ? metres.toFixed(1) : Math.round(metres) })}`);
-            const rotate = t('roomRotate');
             setHtml('xrRotL', icon('rotateLeft', 'w-[18px] h-[18px]'));
             setHtml('xrRotR', icon('rotateRight', 'w-[18px] h-[18px]'));
-            $('xrRotL')?.setAttribute('aria-label', rotate);
-            $('xrRotR')?.setAttribute('aria-label', rotate);
+            $('xrRotL')?.setAttribute('aria-label', t('roomRotate'));
+            $('xrRotR')?.setAttribute('aria-label', t('roomRotate'));
         },
     );
-    // A tap on a button or card must not also move the model in the room.
+    // A tap on a button or the story card must not also move the model in the room.
     $('xrOverlay')?.addEventListener('beforexrselect', (e) => {
         if ((e.target as Element | null)?.closest('button, #xrStory')) e.preventDefault();
     });
 }
 
 export function mountAr(): void {
-    const stage3d = $('arThree');
-    const has3d = stage3d ? initEngine(stage3d, positionPins3d) : false;
+    const stage = $('arThree');
+    const has3d = stage ? initEngine(stage, positionPins) : false;
 
-    // plaque
+    // The camera runs while Live AR is open, except while room AR uses it.
     view(
-        (s) => [s.lang, s.exhibitId, s.dimension],
-        (s) => {
-            const ex = currentExhibit(s);
-            setText('arNum', `${ex[s.lang].code} • ${ex.year}`);
-            setText('arTitle', ex[s.lang].title);
-            setText('arModePill', t(s.dimension === '3d' ? 'pill3d' : 'pill2d'));
-        },
-    );
-
-    // 2D / 3D layers, then the engine (it measures its now-visible container)
-    view(
-        (s) => [s.dimension],
-        (s) => {
-            const is3d = s.dimension === '3d';
-            setClass('arDim-2d', is3d ? DIM_OFF : DIM_ON);
-            setClass('arDim-3d', is3d ? DIM_ON : DIM_OFF);
-            setHidden('arDrawingBox', is3d);
-            setHidden('arThreeBox', !is3d);
-            setHidden('ar3dTools', !is3d);
-            setHidden('ar3dHint', !is3d);
+        (s, u) => [u.screen, s.roomAr],
+        (s, u) => {
+            if (u.screen === 'ar' && !roomRunning(s)) void setArCamera(true);
         },
     );
     view(
-        (s, u) => [u.screen, s.dimension],
-        (s, u) => setEngineActive(has3d && u.screen === 'ar' && s.dimension === '3d'),
-    );
-
-    // camera
-    view(
-        (s) => [s.lang, s.camera],
+        (s) => [s.camera],
         (s) => {
-            const on = s.camera !== 'off';
-            setClass('arCamBtn', on ? TOOL_BLUE : TOOL_WHITE);
-            setHtml('arCamBtn', `${icon('camera', 'w-4 h-4')}${t(on ? 'cameraOff' : 'camera')}`);
             const video = $('arVideo') as HTMLVideoElement | null;
             if (video) {
                 const stream = s.camera === 'live' ? getCameraStream() : null;
@@ -290,72 +292,77 @@ export function mountAr(): void {
         },
     );
 
-    // 3D tools
+    // The model: shown unless the picture has not been found yet.
     view(
-        (s) => [s.lang, s.timelapse, s.xray],
-        (s) => {
-            setText('arTimelapseText', s.timelapse ? t('timelapseStop') : `▶ ${t('timelapseStart')}`);
-            setClass('arXray', s.xray ? TOOL_BLUE : TOOL_WHITE);
+        (s, u) => [u.screen, aiming(s)],
+        (s, u) => {
+            const show = has3d && u.screen === 'ar' && !aiming(s);
+            setHidden('arThree', !show); // visible first: the engine measures it
+            setEngineActive(show);
+            setHidden('arTarget', !aiming(s));
         },
     );
-    view(
-        (s) => [s.lang, anchorBearingFor(s) !== null],
-        (s) => setText('ar3dHintText', t(anchorBearingFor(s) !== null ? 'hintAnchored' : 'hint3d')),
-    );
-
-    // era time machine
-    view(
-        (s) => [s.lang, s.arEra],
-        (s) => {
-            setText('arEraLabel', t('arTimeMachineLabel'));
-            setText('arEra-todayText', t('eraToday'));
-            for (const era of ['1900', '1950', 'today'] as const) setClass('arEra-' + era, era === s.arEra ? ERA_ON : ERA_OFF);
-            const ill = $('arDrawing');
-            if (ill) {
-                ill.classList.remove('era-filter-1900', 'era-filter-1950', 'era-filter-today');
-                ill.classList.add('era-filter-' + s.arEra);
-            }
-        },
-    );
-
-    // the building itself
     view(
         (s) => [s.exhibitId, s.arEra],
-        (s) => {
-            const host = $('arDrawing');
-            if (host) render2dArchitecturalSvg(host, currentExhibit(s), s.arEra);
-        },
+        (s) => showModel(currentExhibit(s), s.arEra),
     );
     view(
-        (s) => [s.exhibitId, s.arEra, s.xray],
-        (s) => showModel(currentExhibit(s), s.arEra, s.xray),
-    );
-    view(
-        (s) => [s.camera, s.demoMode, s.heading === null, s.coords, s.accuracy, s.exhibitId],
-        (s) => setAnchorBearing(anchorBearingFor(s)),
+        (s) => [s.arMode, s.camera, s.demoMode, s.heading === null, s.coords, s.accuracy, s.exhibitId, s.imageAr],
+        (s) => setAnchorBearing(s.arMode === 'street' ? anchorBearingFor(s) : null),
     );
 
-    // pins + story sheet
+    // Top: the exhibit and the audio guide.
     view(
-        (s) => [s.lang, s.exhibitId, s.hotspotIndex, s.dimension, s.memories, inRoom(s)],
+        (s) => [s.lang, s.exhibitId, s.audioPlaying],
         (s) => {
+            setText('arNum', exhibitNum(s));
+            setText('arTitle', currentExhibit(s)[s.lang].title);
+            setHtml('arClose', icon('x', 'w-5 h-5'));
+            $('arClose')?.setAttribute('aria-label', t('close'));
+            setHtml('arAudio', icon(s.audioPlaying ? 'pause' : 'headphones', 'w-5 h-5'));
+            $('arAudio')?.setAttribute('aria-label', t('audioGuide'));
+            $('arAudio')?.classList.toggle('bg-sky-500/70', s.audioPlaying);
+        },
+    );
+
+    view(
+        (s) => [s.lang, s.arEra],
+        (s) => setHtml('arDial', dialHtml(s)),
+    );
+
+    // Bottom: hint, modes and the big button; or the story card.
+    view(
+        (s, u) => [s.lang, s.arMode, s.roomAr, s.imageAr, s.exhibitId, s.stamps, s.scanning, s.gps, s.coords, s.accuracy, s.heading, u.story],
+        (s, u) => {
+            setText('arHint', hintFor(s));
+            setHtml('arModes', modesHtml(s));
+            setHtml('arShutter', shutterHtml(s));
+            setHidden('arControls', u.story);
+            setHidden('arStory', !u.story);
+            setHidden('arLockRow', s.arMode !== 'street');
+        },
+    );
+
+    // Pins and the story.
+    view(
+        (s, u) => [s.lang, s.exhibitId, s.hotspotIndex, s.memories, inRoom(s), aiming(s), u.story],
+        (s, u) => {
             if (s.hotspotIndex > pins(s).length - 1) {
                 setState({ hotspotIndex: 0 });
                 return;
             }
             renderPins(s);
-            renderStory(s);
+            if (u.story) setHtml('arStory', storyHtml(s));
         },
     );
 
-    // lock chip, scanner, off-target card, stamp button
+    // Street mode: lock chip, scanner, off-target card.
     view((s) => [s.lang, s.exhibitId, s.gps, s.coords, s.accuracy, s.heading, s.demoMode, s.scanning], renderLockChip);
     view(
         (s) => [s.scanning],
         (s) => setHidden('arScanner', !s.scanning),
     );
     view((s) => [s.offTargetOverlay, s.lang, s.exhibitId, s.coords, s.accuracy, s.heading], renderOverlay);
-    view((s) => [s.lang, s.exhibitId, s.stamps, s.gps, s.coords, s.accuracy, s.heading], renderCollect);
 
-    mountRoomAr();
+    mountRoomOverlay();
 }

@@ -1,6 +1,7 @@
 import './styles.css';
 
 import { initArControls } from './features/ar/controls';
+import { initImageAr } from './features/ar/imageAr';
 import { detectRoomAr } from './features/ar/room';
 import { initAudio } from './features/audio';
 import { initLocation } from './features/location';
@@ -32,6 +33,7 @@ function boot(): void {
     initLocation();
     initAudio();
     initArControls();
+    initImageAr();
     void loadMemories();
     void detectRoomAr();
     void initPlatform();

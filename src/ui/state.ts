@@ -12,6 +12,8 @@ export interface UiState {
     /** Where closing the AR view goes. */
     arBack: Screen;
     exhibitTab: 'stories' | 'memories';
+    /** Live AR: the story card of the selected pin is open. */
+    story: boolean;
     memorySheet: boolean;
     memoryExhibitId: number;
 }
@@ -22,6 +24,7 @@ let ui: UiState = {
     exhibitBack: 'explore',
     arBack: 'explore',
     exhibitTab: 'stories',
+    story: false,
     memorySheet: false,
     memoryExhibitId: 0,
 };

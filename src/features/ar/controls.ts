@@ -1,55 +1,54 @@
-import type { ArEra } from '../../data/types';
 import { startCamera, stopCamera } from '../../platform/camera';
 import { startCompass } from '../../platform/compass';
-import { getState, setState, watch } from '../../state/store';
+import { getState, setState, watch, type AppState, type ArMode } from '../../state/store';
 import { t } from '../../ui/i18n';
 import { currentAssessment } from '../exhibits';
 import { setDemoMode, startGps, waitForFix } from '../location';
 import { showToast } from '../toast';
+import { isOnSite } from './verification';
 
-const ERAS: ArEra[] = ['1900', '1950', 'today'];
-const TIMELAPSE_STEP_MS = 2000;
 /** Length of the scanner sweep animation. */
 const SCAN_MS = 1900;
 const SCAN_FIX_TIMEOUT_MS = 8000;
 /** Demo: how far the simulated phone looks away in the wrong-building test. */
 const DEMO_WRONG_OFFSET_DEG = -35;
 
-let timelapseTimer: ReturnType<typeof setInterval> | undefined;
+/** Increases on every on/off, so a camera that opens after AR was left is closed again. */
+let cameraRun = 0;
 
-export function stopTimelapse(): void {
-    clearInterval(timelapseTimer);
-    timelapseTimer = undefined;
-    setState({ timelapse: false });
-}
-
-/** Cycle 1900 -> 1950 -> today so the building visibly evolves. */
-export function toggleTimelapse(): void {
-    if (getState().timelapse) {
-        stopTimelapse();
+/**
+ * The live camera behind the AR view: on while Live AR is open, off when it
+ * closes or room AR needs the camera for itself. Without a camera (refused,
+ * or a desktop) the view shows a simulated backdrop instead.
+ */
+export async function setArCamera(on: boolean): Promise<void> {
+    if (!on) {
+        cameraRun++;
+        if (getState().camera !== 'off') {
+            stopCamera();
+            setState({ camera: 'off' });
+        }
         return;
     }
-    let step = 0;
-    setState({ timelapse: true, arEra: ERAS[step] });
-    timelapseTimer = setInterval(() => {
-        step = (step + 1) % ERAS.length;
-        setState({ arEra: ERAS[step] });
-    }, TIMELAPSE_STEP_MS);
-}
-
-/** Camera on => live feed (or a simulated backdrop) behind the 3D hologram. */
-export async function toggleCamera(): Promise<void> {
-    if (getState().camera !== 'off') {
-        stopCamera();
-        stopTimelapse();
-        setState({ camera: 'off', dimension: '2d' });
-        return;
-    }
-    void startCompass(); // user gesture: lets iOS show its motion prompt
-    setState({ dimension: '3d' });
+    if (getState().camera !== 'off') return;
+    const mine = ++cameraRun;
     const stream = await startCamera();
+    if (mine !== cameraRun) {
+        stopCamera();
+        return;
+    }
     setState({ camera: stream ? 'live' : 'simulated' });
-    showToast(t(stream ? 'toastCameraOn' : 'toastCameraSim'));
+}
+
+/** The AR mode Live AR opens in: street at the exhibit, else room if the phone can, else picture. */
+export function defaultArMode(s: Readonly<AppState>): ArMode {
+    if (isOnSite(currentAssessment(s))) return 'street';
+    return s.roomAr !== 'unsupported' ? 'room' : 'image';
+}
+
+/** Ask for compass access; only works inside a tap on iOS. */
+export function wakeCompass(): void {
+    void startCompass();
 }
 
 const delay = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
