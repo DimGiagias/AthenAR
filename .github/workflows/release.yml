@@ -1,0 +1,74 @@
+name: Release Android APK
+
+# Builds the Android app and attaches athenar.apk to a GitHub Release whenever
+# a version tag is pushed:   git tag v0.1.0 && git push origin v0.1.0
+#
+# Signing (see README, "Signing key"): add these repository secrets BEFORE
+# handing an APK to anyone. Without them the build still succeeds but is signed
+# with a throw-away key, and Android will refuse to update over it later.
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+#   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - run: npm ci
+      - run: npm test
+
+      - name: Build web app
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.ref_name }}
+          VITE_TARGET: android
+          VITE_LATEST_RELEASE_API: https://api.github.com/repos/${{ github.repository }}/releases/latest
+
+      - name: Copy web app into the Android project
+        run: npx cap sync android
+
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No signing key configured. This APK is signed with a throw-away debug key: do not distribute it."
+          fi
+
+      - name: Build APK
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          export VERSION_NAME="${GITHUB_REF_NAME#v}"
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk athenar.apk
+          gh release create "$GITHUB_REF_NAME" athenar.apk --title "AthenAR $GITHUB_REF_NAME" --generate-notes
