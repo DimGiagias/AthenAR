@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => ({
         target: 'es2020',
         chunkSizeWarningLimit: 1200,
     },
+    // Only the app's own page: local reference folders with other HTML pages
+    // must not be scanned for dependencies.
+    optimizeDeps: { entries: ['index.html'] },
     // The street map (MapLibre) decodes its tiles in a module worker.
     worker: { format: 'es' },
     plugins: [
