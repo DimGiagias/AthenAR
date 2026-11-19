@@ -1,0 +1,127 @@
+/* Custom rules come before Tailwind on purpose, so a utility class on an
+   element can still override them. */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    background: radial-gradient(circle at 50% 0%, #FFFFFF 0%, #EFF6FF 55%, #E0F2FE 100%);
+    color: #0F172A;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+}
+.font-museum {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.32;
+}
+h1, h2, h3, h4 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 600 !important;
+}
+.mobile-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.mobile-scroll::-webkit-scrollbar-track { background: transparent; }
+.mobile-scroll::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.35); border-radius: 9999px; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* AR story pins */
+@keyframes pulseSkyBlue {
+    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); transform: translate(-50%, -50%) scale(1); }
+    70% { box-shadow: 0 0 0 14px rgba(56, 189, 248, 0); transform: translate(-50%, -50%) scale(1.07); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); transform: translate(-50%, -50%) scale(1); }
+}
+.ar-node-pin { animation: pulseSkyBlue 2.2s infinite; }
+
+/* Audio equaliser */
+@keyframes eqBounce {
+    0%, 100% { transform: scaleY(0.35); }
+    50% { transform: scaleY(1); }
+}
+.eq-bar { transform-origin: center; transition: background-color 0.2s ease; }
+.playing .eq-bar { animation: eqBounce 0.7s ease-in-out infinite; }
+.playing .eq-bar:nth-child(odd) { animation-duration: 0.55s; }
+.playing .eq-bar:nth-child(3n) { animation-delay: 0.15s; }
+.playing .eq-bar:nth-child(4n) { animation-delay: 0.28s; }
+
+/* Street map (MapLibre) */
+#exMap { background: #F1F7FD; }
+#exMap.map-unavailable {
+    display: flex; align-items: center; justify-content: center; padding: 1rem;
+    text-align: center; font-size: 11px; font-weight: 600; color: #64748B;
+}
+.map-pin { width: 26px; height: 26px; cursor: pointer; }
+.map-pin__dot {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 9999px; border: 2px solid #FFFFFF;
+    background: #0284C7; box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.24);
+    color: #FFFFFF; font-size: 9px; font-weight: 700; line-height: 1;
+    transition: transform 0.15s ease;
+}
+.map-pin--ancient .map-pin__dot { background: #D97706; box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.24); }
+.map-pin--byzantine .map-pin__dot { background: #4F46E5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.24); }
+.map-pin.is-selected .map-pin__dot {
+    background: #0F172A; border-color: #38BDF8; box-shadow: 0 0 0 5px rgba(15, 23, 42, 0.22); transform: scale(1.18);
+}
+.map-pin.is-dimmed > * { opacity: 0.28; }
+.map-pin__label {
+    display: none; position: absolute; left: 50%; bottom: calc(100% + 5px); transform: translateX(-50%);
+    white-space: nowrap; padding: 1px 6px; border-radius: 5px; border: 1px solid #BAE6FD;
+    background: rgba(255, 255, 255, 0.94); color: #0F172A; font-size: 10px; font-weight: 600;
+    line-height: 1.35; pointer-events: none;
+}
+.map-labels-on .map-pin:not(.is-dimmed) .map-pin__label,
+.map-pin.is-selected .map-pin__label { display: block; }
+.map-user { width: 14px; height: 14px; pointer-events: none; z-index: 4; }
+.map-user__dot { position: absolute; inset: 0; border-radius: 9999px; border: 2.5px solid #FFFFFF; background: #10B981; }
+.map-user__pulse { position: absolute; inset: -3px; border-radius: 9999px; background: #10B981; animation: mapUserPulse 1.8s ease-out infinite; }
+.map-user__label {
+    position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap;
+    padding: 1px 6px; border-radius: 5px; border: 1px solid #FFFFFF; background: #065F46; color: #FFFFFF;
+    font-size: 9.5px; font-weight: 600; line-height: 1.35;
+}
+.map-user--demo .map-user__dot, .map-user--demo .map-user__pulse { background: #F59E0B; }
+.map-user--demo .map-user__label { background: #92400E; }
+@keyframes mapUserPulse { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(2.6); opacity: 0; } }
+
+/* AR stage */
+.era-filter-1900 { filter: sepia(0.35) contrast(1.05) brightness(0.98) hue-rotate(175deg); }
+.era-filter-1950 { filter: saturate(0.78) contrast(1.06) brightness(0.99); }
+.era-filter-today { filter: none; }
+/* The 2D drawing keeps fixed proportions so the story pins stay on the building. */
+.ar-stage { container-type: size; }
+.ar-drawing-box { position: relative; aspect-ratio: 360 / 365; width: min(100cqw, calc(100cqh * 360 / 365)); }
+@keyframes laserSweep { 0% { top: 8%; opacity: 0.2; } 50% { top: 86%; opacity: 0.95; } 100% { top: 8%; opacity: 0.2; } }
+.ai-laser-line {
+    position: absolute; left: 6%; right: 6%; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #38BDF8 20%, #0284C7 50%, #38BDF8 80%, transparent 100%);
+    box-shadow: 0 0 12px #38BDF8; animation: laserSweep 1.8s ease-in-out infinite;
+}
+
+/* Welcome */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes logoIn { from { opacity: 0; transform: scale(0.82); } }
+.welcome-in .w-rise { animation: rise 0.7s cubic-bezier(.22, 1, .36, 1) both; animation-delay: var(--d, 0ms); }
+.welcome-in .w-logo { animation: logoIn 0.8s cubic-bezier(.34, 1.4, .64, 1) both; }
+#welcome { transition: opacity 0.45s ease, transform 0.45s ease; }
+#welcome.is-leaving { opacity: 0; transform: scale(1.03); pointer-events: none; }
+
+/* Sheets and screens */
+@keyframes sheetUp { from { transform: translateY(100%); } }
+.sheet-in { animation: sheetUp 0.32s cubic-bezier(.22, 1, .36, 1); }
+@keyframes fadeIn { from { opacity: 0; } }
+.fade-in { animation: fadeIn 0.25s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+    .welcome-in .w-rise, .welcome-in .w-logo, .sheet-in, .fade-in, .ar-node-pin, .playing .eq-bar { animation: none; }
+    #welcome { transition: none; }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* The design uses only two heavy weights: cap Tailwind's bold and extrabold. */
+.font-extrabold { font-weight: 600 !important; }
+.font-bold { font-weight: 500 !important; }

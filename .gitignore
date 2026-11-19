@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+coverage/
+
+# Local APK builds (npm run apk, node v1/build-apk.mjs, CI's athenar.apk)
+/*.apk
+
+# Local settings and secrets
+*.local
+.env
+.env.*
+
+# Signing keys must never be committed
+*.keystore
+*.jks
+
+# Android / Capacitor build output (android/.gitignore also covers these,
+# plus the generated capacitor.config.json, capacitor.plugins.json and
+# res/xml/config.xml)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+
+# Local-only reference copies: the previous design (v1/, with its own
+# generated dist-v1/ and v1/android/) and the original design prototype
+v1/
+dist-v1/
+prototype/
+
+# Old build output and test APKs set aside during clean-up
+_archive/
+
+# Logs
+*.log
+
+# Editors and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

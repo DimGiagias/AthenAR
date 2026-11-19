@@ -1,0 +1,40 @@
+{
+  "name": "athenar",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AthenAR — Athens Open-Air Museum (Apps4Athens 3.0)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "phone": "tsc --noEmit && vite build --mode phone && vite preview --mode phone --host --port 5443 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "apk": "node scripts/build-apk.mjs"
+  },
+  "dependencies": {
+    "@capacitor-community/text-to-speech": "8.0.2",
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "maplibre-gl": "^6.18.0",
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "@mapbox/vector-tile": "^3.0.0",
+    "@maplibre/vt-pbf": "^4.3.3",
+    "@types/geojson": "^7946.0.16",
+    "@types/three": "0.128.0",
+    "@vitejs/plugin-basic-ssl": "2.3.0",
+    "autoprefixer": "10.6.2",
+    "pbf": "^5.1.2",
+    "pmtiles": "^4.5.0",
+    "postcss": "8.5.33",
+    "tailwindcss": "3.4.19",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "5.1.0"
+  }
+}

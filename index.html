@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AthenAR">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#F8FAFC">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <title>AthenAR — Το Ανοιχτό Μουσείο της Αθήνας | Athens Open-Air Museum</title>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center sm:py-5 sm:px-4 select-none">
+
+    <!-- Phone frame on desktop, full screen on a phone (same as the app) -->
+    <div class="w-full sm:w-[408px] h-[100dvh] sm:h-[844px] bg-marble-bg sm:rounded-[48px] sm:border-[10px] sm:border-[#E2E8F0] shadow-[0_28px_80px_rgba(2,132,199,0.14)] flex flex-col relative overflow-hidden ring-1 ring-sky-900/5">
+
+        <div class="hidden sm:flex items-center justify-between px-7 pt-2.5 pb-1 bg-white text-[11px] font-bold text-marble-ink/80 z-[90] shrink-0">
+            <span>09:41</span>
+            <div class="w-20 h-4 bg-slate-900 rounded-full flex items-center justify-end pr-2"><span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span></div>
+            <div class="flex items-center gap-1.5 text-marble-ink/70">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>
+                <svg class="w-4 h-4 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="10" x="2" y="7" rx="2" ry="2"/><line x1="22" x2="22" y1="11" y2="13"/><line x1="6" x2="6" y1="11" y2="13"/><line x1="10" x2="10" y1="11" y2="13"/><line x1="14" x2="14" y1="11" y2="13"/></svg>
+            </div>
+        </div>
+
+        <div id="app" class="relative flex-1 min-h-0 flex flex-col">
+
+            <!-- ============================== HEADER (Explore, Passport) -->
+            <header id="appHeader" class="shrink-0 h-16 px-4 bg-white/95 backdrop-blur-md border-b border-marble-border flex items-center justify-between z-20">
+                <button onclick="app.showWelcome()" class="flex items-center gap-2.5 text-left focus:outline-none" title="AthenAR">
+                    <span class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 shadow-sm flex items-center justify-center">
+                        <svg viewBox="0 0 48 48" class="w-8 h-8" fill="none" aria-hidden="true"><path d="M7 14V9a2 2 0 0 1 2-2h5M34 7h5a2 2 0 0 1 2 2v5M41 34v5a2 2 0 0 1-2 2h-5M14 41H9a2 2 0 0 1-2-2v-5" stroke="#38BDF8" stroke-width="2.4" stroke-linecap="round"/><path d="M13 20L24 12.5L35 20H13Z" fill="#38BDF8" fill-opacity="0.22" stroke="#0284C7" stroke-width="2.2" stroke-linejoin="round"/><path d="M17.5 24V33M30.5 24V33" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/><path d="M24 22.5V34.5" stroke="#0284C7" stroke-width="2.6" stroke-linecap="round"/><circle cx="24" cy="17" r="1.7" fill="#0284C7"/></svg>
+                    </span>
+                    <span class="flex flex-col gap-[3px]">
+                        <span class="flex items-center gap-1.5">
+                            <span class="font-museum text-[19px] leading-5 text-marble-ink">AthenAR</span>
+                            <span class="px-[5px] py-0.5 rounded-md bg-sky-100 text-sky-700 text-[10px] font-extrabold tracking-[0.06em]">360°</span>
+                        </span>
+                        <span id="hdrSub" class="text-[10px] font-bold uppercase tracking-[0.06em] text-sky-700 leading-3"></span>
+                    </span>
+                </button>
+                <div class="flex items-center gap-1.5">
+                    <div class="flex p-0.5 rounded-xl bg-marble-subtle border border-sky-200">
+                        <button id="hdrLang-el" onclick="app.setLang('el')">ΕΛ</button>
+                        <button id="hdrLang-en" onclick="app.setLang('en')">EN</button>
+                    </div>
+                    <button onclick="app.go('passport')" class="h-[34px] px-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-xs font-extrabold flex items-center gap-1.5 hover:bg-sky-100 transition">
+                        <svg class="w-[15px] h-[15px] text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                        <span id="hdrStamps">0/11</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="relative flex-1 min-h-0">
+
+                <!-- ============================== EXPLORE -->
+                <section id="scr-explore" class="absolute inset-0 overflow-hidden">
+                    <!-- The map: its height is set from the sheet (explore.ts), so it covers only what you can see.
+                         MapLibre makes this position:relative, so it needs an explicit size. -->
+                    <div id="exMap" class="absolute inset-0 w-full h-full"></div>
+                    <!-- The sheet lies over the map. Drag its top edge (or tap it) to slide it down to a strip and give the map nearly the whole screen. -->
+                    <div id="exSheet" style="height: min(calc(54% + 1.5rem), calc(100% - 196px))" class="absolute inset-x-0 bottom-0 z-10 bg-white rounded-t-3xl border-t border-sky-200 shadow-[0_-8px_24px_rgba(2,132,199,0.08)] flex flex-col">
+                        <!-- Map controls ride just above the sheet's top edge -->
+                        <div class="absolute right-2.5 bottom-[calc(100%+12px)] flex flex-col bg-white/95 backdrop-blur-md border border-sky-200 rounded-xl shadow-sm overflow-hidden">
+                            <button onclick="app.zoomMap(1)" aria-label="Zoom in" class="w-10 h-9 border-b border-sky-100 text-sky-700 text-base font-semibold hover:bg-sky-50">+</button>
+                            <button onclick="app.zoomMap(-1)" aria-label="Zoom out" class="w-10 h-9 text-sky-700 text-base font-semibold hover:bg-sky-50">−</button>
+                        </div>
+                        <span id="exCredit" class="absolute left-2.5 bottom-[calc(100%+8px)] px-1.5 py-px rounded-[5px] bg-white/90 text-[10px] text-marble-muted pointer-events-none"></span>
+                        <div id="exSheetGrab" class="shrink-0 touch-none select-none cursor-grab active:cursor-grabbing">
+                            <button id="exSheetHandle" type="button" aria-expanded="true" aria-controls="exSheet" class="w-full h-5 pt-2 flex justify-center focus:outline-none">
+                                <span class="w-9 h-1 rounded-full bg-sky-200"></span>
+                            </button>
+                            <!-- How many exhibits are shown, and the era and corridor filters -->
+                            <div class="px-4 pb-3 flex items-center justify-between gap-2">
+                                <span class="min-w-0 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-marble-ink">
+                                    <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span><span id="exCount" class="truncate"></span>
+                                </span>
+                                <div class="shrink-0 flex items-center gap-1.5">
+                                    <label id="exEraPill">
+                                        <span id="exEraDot" class="w-2 h-2 rounded-full shrink-0"></span>
+                                        <span id="exEraText" class="truncate"></span>
+                                        <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                        <select id="exEraSelect" onchange="app.eraFilter(this.value)" class="absolute inset-0 opacity-0 cursor-pointer"></select>
+                                    </label>
+                                    <label class="relative h-7 max-w-[132px] pl-2.5 pr-1.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-semibold flex items-center gap-1 cursor-pointer">
+                                        <span id="exCorridorText" class="truncate"></span>
+                                        <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                        <select id="exCorridorSelect" onchange="app.corridor(this.value)" class="absolute inset-0 opacity-0 cursor-pointer"></select>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="exList" class="flex-1 min-h-0 overflow-y-auto mobile-scroll px-4 pb-4 space-y-2.5"></div>
+                    </div>
+                </section>
+
+                <!-- ============================== EXHIBIT PAGE -->
+                <section id="scr-exhibit" class="hidden absolute inset-0 flex flex-col bg-white">
+                    <!-- Stays in place while the page scrolls -->
+                    <button id="xBack" onclick="app.back()" class="absolute top-3 left-3 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md border border-sky-200 text-sky-700 shadow-[0_2px_8px_rgba(15,23,42,0.12)] flex items-center justify-center hover:bg-sky-50 transition">
+                        <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <div id="xScroll" class="flex-1 min-h-0 overflow-y-auto mobile-scroll">
+                        <!-- Hero: a photo of the building, full width (the drawing if there is no photo) -->
+                        <div class="relative h-[236px] bg-gradient-to-b from-[#E0F2FE] via-[#F0F7FF] to-[#F8FAFC] overflow-hidden">
+                            <div id="xDrawing" class="absolute inset-x-4 top-12 bottom-8"></div>
+                            <img id="xPhoto" alt="" class="hidden absolute inset-0 w-full h-full object-cover" decoding="async">
+                            <!-- keeps the back button and stamp pill readable over a bright photo -->
+                            <div id="xPhotoShade" class="hidden absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-slate-900/30 to-transparent pointer-events-none"></div>
+                            <a id="xPhotoCredit" target="_blank" rel="noopener" class="hidden absolute right-2 bottom-[30px] max-w-[70%] truncate px-1.5 py-px rounded-[5px] bg-slate-900/45 text-[9px] leading-[14px] text-white/90"></a>
+                            <div id="xStamp" class="absolute top-[18px] right-3"></div>
+                        </div>
+                        <!-- Content sheet over the drawing (same shape as the Explore sheet) -->
+                        <div class="relative -mt-6 bg-white rounded-t-3xl border-t border-sky-200 px-4 pt-5 pb-6 space-y-4">
+                            <div id="xHead"></div>
+                            <div id="xActions" class="flex gap-2.5"></div>
+                            <p id="xDesc" class="text-[15px] leading-[22px] text-slate-700"></p>
+                            <div id="xStories"></div>
+                            <details class="group border-t border-sky-100 pt-3">
+                                <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer flex items-center justify-between gap-2 text-xs font-semibold text-sky-700">
+                                    <span id="xTranscriptLabel"></span>
+                                    <svg class="w-4 h-4 transition group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </summary>
+                                <p id="xTranscriptMain" class="text-[13px] leading-5 text-marble-ink mt-2"></p>
+                            </details>
+                        </div>
+                    </div>
+                    <!-- Mini audio player: docked above the bottom bar while the guide plays -->
+                    <div id="xPlayer" class="hidden shrink-0 h-[68px] px-4 bg-sky-50 border-t border-sky-200 flex items-center gap-3">
+                        <button id="xPlayBtn" onclick="app.audio()" class="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white flex items-center justify-center shadow-sm"></button>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2 text-xs">
+                                <span id="xPlayerTitle" class="font-semibold text-marble-ink"></span>
+                                <span id="xPlayerSub" class="text-marble-muted truncate"></span>
+                            </div>
+                            <div id="xEq" class="flex items-center justify-between h-4 mt-1.5"></div>
+                        </div>
+                        <button id="xSpeed" onclick="app.speed()" class="shrink-0 h-7 px-1.5 rounded-lg bg-white border border-sky-200 text-sky-700 text-[11px] font-semibold"></button>
+                        <div class="shrink-0 flex p-0.5 rounded-[10px] bg-white border border-sky-200">
+                            <button id="xAud-el" onclick="app.audioLang('el')" aria-label="Ελληνική αφήγηση">ΕΛ</button>
+                            <button id="xAud-en" onclick="app.audioLang('en')" aria-label="English narration">EN</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============================== PASSPORT -->
+                <section id="scr-passport" class="hidden absolute inset-0 overflow-y-auto mobile-scroll">
+                    <div class="p-4 pb-6 space-y-3">
+                        <div id="ppMain" class="space-y-3"></div>
+                        <details class="group bg-white/70 border border-sky-200 rounded-3xl px-4 py-3">
+                            <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer flex items-center justify-between gap-2">
+                                <span class="flex items-center gap-2 text-[13px] font-semibold text-marble-muted">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                                    <span id="ppPresenterTitle"></span>
+                                </span>
+                                <svg class="w-4 h-4 text-marble-muted transition group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </summary>
+                            <p id="ppPresenterSub" class="text-xs text-marble-muted mt-2"></p>
+                            <div class="mt-3 flex items-start gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <div id="ppDemoTitle" class="text-[13px] font-semibold text-marble-ink"></div>
+                                    <div id="ppDemoSub" class="text-[11px] leading-snug text-marble-muted mt-0.5"></div>
+                                </div>
+                                <button id="ppDemoBtn" onclick="app.demo()"></button>
+                            </div>
+                            <button onclick="app.wrongBuilding()" class="mt-3 w-full h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-amber-100 transition">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                <span id="ppWrongBtn"></span>
+                            </button>
+                        </details>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ============================== BOTTOM BAR -->
+            <nav id="appNav" class="shrink-0 h-[72px] px-3 py-2 bg-white/95 backdrop-blur-md border-t border-marble-border grid grid-cols-3 gap-1.5 z-20">
+                <button id="nav-explore" onclick="app.go('explore')">
+                    <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/></svg>
+                    <span id="navLbl-explore"></span>
+                </button>
+                <button id="nav-ar" onclick="app.liveAr()">
+                    <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="1"/><path d="M18.944 12.33a1 1 0 0 0 0-.66 7.5 7.5 0 0 0-13.888 0 1 1 0 0 0 0 .66 7.5 7.5 0 0 0 13.888 0"/></svg>
+                    <span id="navLbl-ar"></span>
+                </button>
+                <button id="nav-passport" onclick="app.go('passport')">
+                    <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <span id="navLbl-passport"></span>
+                </button>
+            </nav>
+
+            <!-- ============================== LIVE AR (full screen) -->
+            <section id="scr-ar" class="hidden absolute inset-0 z-30 overflow-hidden bg-gradient-to-b from-[#E0F2FE] via-[#F0F7FF] to-[#F8FAFC]">
+                <video id="arVideo" autoplay playsinline muted class="hidden absolute inset-0 w-full h-full object-cover"></video>
+                <div id="arSimBackdrop" class="hidden absolute inset-0 bg-gradient-to-b from-slate-900/80 via-sky-950/70 to-slate-900/85 pointer-events-none">
+                    <div class="w-full h-full opacity-25" style="background-image: radial-gradient(#38BDF8 1px, transparent 1px); background-size: 18px 18px;"></div>
+                </div>
+                <div id="arScanner" class="hidden absolute inset-0 z-[6] pointer-events-none"><div class="ai-laser-line"></div></div>
+
+                <div class="relative z-10 h-full flex flex-col pointer-events-none">
+                    <div class="shrink-0 px-3 pt-3 space-y-2">
+                        <div class="flex items-center gap-2 pointer-events-auto">
+                            <button onclick="app.closeAr()" aria-label="Close AR" class="shrink-0 w-11 h-11 rounded-2xl bg-white/95 border border-sky-200 shadow-sm text-marble-ink flex items-center justify-center hover:bg-sky-50 transition">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                            <div class="flex-1 min-w-0 px-3 py-1.5 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span id="arNum" class="text-[10px] font-semibold uppercase tracking-[0.1em] text-sky-600 truncate"></span>
+                                    <span id="arModePill" class="shrink-0 px-1.5 py-px rounded bg-sky-100 text-sky-700 text-[10px] font-semibold"></span>
+                                </div>
+                                <div id="arTitle" class="text-sm font-semibold text-marble-ink truncate"></div>
+                            </div>
+                            <div class="shrink-0 flex p-0.5 rounded-2xl bg-marble-subtle border border-sky-200">
+                                <button id="arDim-2d" onclick="app.dim('2d')">2D</button>
+                                <button id="arDim-3d" onclick="app.dim('3d')">3D</button>
+                            </div>
+                        </div>
+                        <div class="flex"><button id="arLock" onclick="app.scan()"></button></div>
+                    </div>
+
+                    <div class="ar-stage relative flex-1 min-h-0 flex items-center justify-center">
+                        <div id="arDrawingBox" class="ar-drawing-box">
+                            <div id="arDrawing" class="absolute inset-0 transition-all duration-500 era-filter-today"></div>
+                            <div id="arPins2d" class="absolute inset-0 pointer-events-none"></div>
+                        </div>
+                        <!-- 3D hologram: same frame as the 2D drawing (the 3D camera is set up for it);
+                             the camera feed stays full screen behind it -->
+                        <div id="arThreeBox" class="hidden ar-drawing-box pointer-events-auto">
+                            <div id="arThree" class="absolute inset-0 cursor-grab active:cursor-grabbing"></div>
+                            <div id="arPins3d" class="absolute inset-0 pointer-events-none"></div>
+                        </div>
+                        <div id="ar3dHint" class="hidden absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/85 backdrop-blur-md text-white border border-sky-400/40 px-3 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span><span id="ar3dHintText"></span>
+                        </div>
+                    </div>
+
+                    <div class="shrink-0 pointer-events-auto">
+                        <div class="px-3 pb-2 space-y-2">
+                            <div id="arCollect"></div>
+                            <div class="h-12 p-[5px] rounded-2xl bg-white/95 backdrop-blur-md border border-sky-200 shadow-sm flex items-center gap-1">
+                                <span class="shrink-0 flex items-center gap-1 pl-2 pr-1.5 text-[11px] font-semibold text-marble-muted">
+                                    <svg class="w-3.5 h-3.5 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                                    <span id="arEraLabel"></span>
+                                </span>
+                                <div class="flex-1 grid grid-cols-3 gap-1">
+                                    <button id="arEra-1900" onclick="app.era('1900')">1900–1935</button>
+                                    <button id="arEra-1950" onclick="app.era('1950')">1950–1975</button>
+                                    <button id="arEra-today" onclick="app.era('today')"><span id="arEra-todayText"></span></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="arStory" class="bg-white rounded-t-3xl border-t border-sky-200 shadow-[0_-8px_24px_rgba(2,132,199,0.1)] p-4 space-y-2 max-h-[34vh] overflow-y-auto mobile-scroll"></div>
+                    </div>
+                </div>
+
+                <div class="absolute right-3 top-[112px] z-20 flex flex-col items-end gap-1.5">
+                    <button id="arCamBtn" onclick="app.camera()"></button>
+                    <div id="ar3dTools" class="hidden flex flex-col items-end gap-1.5">
+                        <button onclick="app.timelapse()" class="h-9 px-3 rounded-xl border bg-sky-600 border-sky-400 text-white text-[11px] font-semibold shadow-sm hover:bg-sky-500 transition"><span id="arTimelapseText"></span></button>
+                        <button id="arXray" onclick="app.xray()">X-Ray</button>
+                        <div class="flex flex-col bg-white/95 border border-sky-200 rounded-xl shadow-sm overflow-hidden">
+                            <button onclick="app.zoom3d(-1.1)" aria-label="Zoom in" class="w-9 h-8 border-b border-sky-100 text-sky-700 text-sm font-semibold hover:bg-sky-50">+</button>
+                            <button onclick="app.zoom3d(1.1)" aria-label="Zoom out" class="w-9 h-8 text-sky-700 text-sm font-semibold hover:bg-sky-50">−</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="arOverlay" class="hidden absolute inset-x-3 top-1/2 -translate-y-1/2 z-30"></div>
+            </section>
+
+            <!-- ============================== ADD A MEMORY (sheet) -->
+            <div id="memorySheet" class="hidden absolute inset-0 z-[60]"></div>
+
+            <!-- ============================== TOAST -->
+            <div id="appToast" class="hidden absolute top-20 inset-x-4 z-[80] bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-medium border border-sky-400/30 pointer-events-none">
+                <span class="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center shrink-0 text-xs">✨</span>
+                <span id="appToastText" class="flex-1 leading-snug"></span>
+            </div>
+
+            <!-- ============================== WELCOME -->
+            <section id="welcome" class="welcome-in absolute inset-0 z-[70] overflow-hidden flex flex-col items-center justify-center px-8 text-center" style="background: radial-gradient(circle at 50% 0%, #FFFFFF 0%, #EFF6FF 55%, #E0F2FE 100%)">
+                <span aria-hidden="true" class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-sky-200/35 pointer-events-none"></span>
+                <span aria-hidden="true" class="absolute -left-20 bottom-24 w-48 h-48 rounded-full bg-sky-200/25 pointer-events-none"></span>
+
+                <div class="absolute top-4 right-4 flex p-0.5 rounded-xl bg-white/80 border border-sky-200 shadow-sm">
+                    <button id="wLang-el" onclick="app.setLang('el')">ΕΛ</button>
+                    <button id="wLang-en" onclick="app.setLang('en')">EN</button>
+                </div>
+
+                <div class="w-logo relative w-[120px] h-[120px] rounded-[34px] bg-white border border-sky-100 shadow-[0_18px_44px_rgba(2,132,199,0.20)] flex items-center justify-center">
+                    <svg viewBox="0 0 48 48" class="w-[78px] h-[78px]" fill="none" aria-hidden="true"><path d="M7 14V9a2 2 0 0 1 2-2h5M34 7h5a2 2 0 0 1 2 2v5M41 34v5a2 2 0 0 1-2 2h-5M14 41H9a2 2 0 0 1-2-2v-5" stroke="#38BDF8" stroke-width="2.4" stroke-linecap="round"/><path d="M13 20L24 12.5L35 20H13Z" fill="#38BDF8" fill-opacity="0.22" stroke="#0284C7" stroke-width="2.2" stroke-linejoin="round"/><path d="M17.5 24V33M30.5 24V33" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/><path d="M24 22.5V34.5" stroke="#0284C7" stroke-width="2.6" stroke-linecap="round"/><circle cx="24" cy="17" r="1.7" fill="#0284C7"/></svg>
+                </div>
+
+                <div class="w-rise relative mt-9 flex items-center gap-2.5" style="--d:160ms">
+                    <span class="text-[38px] leading-none tracking-tight text-marble-ink" style="font-weight:700">AthenAR</span>
+                    <span class="px-2 py-1 rounded-lg bg-sky-100 text-sky-700 text-[13px] font-extrabold">360°</span>
+                </div>
+                <p id="wSubtitle" class="w-rise relative mt-4 max-w-[270px] text-[13px] leading-relaxed font-extrabold tracking-[0.2em] text-sky-700" style="--d:240ms"></p>
+                <span class="w-rise relative mt-6 w-14 h-[3px] rounded-full bg-sky-300" style="--d:320ms"></span>
+                <p class="w-rise relative mt-6 text-sm leading-relaxed text-marble-muted" style="--d:390ms">
+                    <span id="wLine1"></span><br><span id="wLine2"></span>
+                </p>
+                <button onclick="app.enter()" class="w-rise relative mt-9 h-[52px] px-8 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 text-white text-[15px] font-extrabold shadow-[0_12px_28px_rgba(37,99,235,0.32)] flex items-center gap-2 hover:opacity-95 active:scale-[0.98] transition" style="--d:470ms">
+                    <span id="wEnter"></span>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+            </section>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
