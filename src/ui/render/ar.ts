@@ -1,23 +1,26 @@
-// Live AR, full screen: the camera is the screen. Glass controls float over it:
-// the exhibit at the top, a time dial on the right edge, and at the bottom a
-// hint, the AR modes (street / room) and one big button that does the next
-// step in the current mode. Pins on the model open a story card. Scanning an
-// exhibit's picture (the Scan buttons) stands the model on that picture.
-// While room AR runs, the same controls live in the WebXR overlay (xr*).
+// Live AR, full screen: the camera is the screen, and it opens as a scanner.
+// No model shows until something is found:
+//  - an exhibit sign: the model stands on it;
+//  - a poster: the model stands on it, and the big button puts it full size
+//    in the visitor's space (room AR, where the phone can);
+//  - the real building, by GPS + compass lock: the model appears over it.
+// Glass controls float over the camera: the exhibit at the top, a time dial on
+// the right edge, and at the bottom a hint and one big button that does the
+// next step. Pins on the model open a story card. While room AR runs, the same
+// controls live in the WebXR overlay (xr*).
 import type { ArEra, Hotspot } from '../../data/types';
 import { anchorBearingFor } from '../../features/ar/anchor';
-import { setArCamera } from '../../features/ar/controls';
-import { AR_TARGETS_IMAGE } from '../../data/arTargets';
+import { foundTarget, startImageAr } from '../../features/ar/imageAr';
 import { ROOM_SCALES } from '../../features/ar/room';
 import { initEngine, projectHotspot, roomModelWidth, setAnchorBearing, setEngineActive, showModel } from '../../features/ar/three/engine';
 import { isOnSite } from '../../features/ar/verification';
 import { currentAssessment, currentExhibit, hotspotsFor } from '../../features/exhibits';
 import { memoryPinLabels } from '../../features/memories';
 import { getCameraStream } from '../../platform/camera';
-import { getState, setState, type AppState, type ArMode } from '../../state/store';
+import { getState, setState, type AppState } from '../../state/store';
 import { $, setClass, setHidden, setHtml, setText } from '../dom';
 import { escapeHtml } from '../escapeHtml';
-import { t, type StringKey } from '../i18n';
+import { t } from '../i18n';
 import { icon, type IconName } from '../icons';
 import { dist } from '../shared';
 import { view } from '../state';
@@ -28,20 +31,26 @@ const PIN_OFF = 'bg-white text-sky-700 border-2 border-sky-400';
 const CHIP = 'pointer-events-auto max-w-full flex items-center gap-2 h-9 pl-3 pr-1.5 rounded-2xl bg-white/95 backdrop-blur-md border shadow-sm text-left transition';
 const BADGE = 'shrink-0 px-2 py-0.5 rounded-lg border text-[11px] font-semibold';
 
-const MODES: Array<{ mode: ArMode; label: StringKey }> = [
-    { mode: 'street', label: 'modeStreet' },
-    { mode: 'room', label: 'modeRoom' },
-];
 /** Top to bottom on the time dial. */
 const ERAS: ArEra[] = ['today', '1950', '1900'];
 
 const roomRunning = (s: Readonly<AppState>): boolean => s.roomAr !== 'off' && s.roomAr !== 'unsupported';
 /** Room AR has the model on the floor: pins and the story live in the WebXR overlay. */
 const inRoom = (s: Readonly<AppState>): boolean => s.roomAr === 'placed';
-/** Scanning for an exhibit's picture, not found yet: only the aiming frame shows. */
-const aiming = (s: Readonly<AppState>): boolean => s.imageAr === 'loading' || s.imageAr === 'scanning';
-/** The model stands on a scanned picture. */
-const onPicture = (s: Readonly<AppState>): boolean => s.imageAr === 'tracking' || s.imageAr === 'holding';
+/** The model stands on a found picture. */
+const onPicture = (s: Readonly<AppState>): boolean => foundTarget(s) !== null;
+/** A poster was found and the phone can put the model in the room. */
+const roomReady = (s: Readonly<AppState>): boolean => foundTarget(s)?.kind === 'poster' && s.roomAr === 'off';
+/** No picture, but GPS + compass have locked on the real building. */
+function onBuilding(s: Readonly<AppState>): boolean {
+    if (onPicture(s)) return false;
+    const { status } = currentAssessment(s);
+    return status === 'locked' || status === 'here';
+}
+/** Something was found, so the model shows. */
+const modelShown = (s: Readonly<AppState>): boolean => onPicture(s) || onBuilding(s);
+/** Nothing found yet: only the aiming frame shows. */
+const scanning = (s: Readonly<AppState>): boolean => !modelShown(s) && !roomRunning(s);
 
 const exhibitNum = (s: Readonly<AppState>): string => `#${String(currentExhibit(s).num).padStart(2, '0')}`;
 
@@ -54,7 +63,7 @@ function renderPins(s: Readonly<AppState>): void {
     const html = pins(s)
         .map((_h, i) => `<button onclick="app.pin(${i})" data-pin="${i}" style="left:-100px;top:-100px;" class="${PIN_BASE} ${i === s.hotspotIndex ? PIN_ON : PIN_OFF}">${i + 1}</button>`)
         .join('');
-    setHtml('arPins3d', room || aiming(s) ? '' : html);
+    setHtml('arPins3d', room || !modelShown(s) ? '' : html);
     setHtml('xrPins', room ? html : '');
     positionPins();
 }
@@ -81,41 +90,32 @@ function dialHtml(s: Readonly<AppState>): string {
     return `<div class="glass rounded-full p-1.5 flex flex-col items-center gap-1">${stops}<span class="pb-1.5 pt-0.5 text-[9px] font-semibold tracking-[0.14em] text-sky-200">${t('arTime')}</span></div>`;
 }
 
-/** The mode switch; empty when the phone has only one mode. */
-function modesHtml(s: Readonly<AppState>): string {
-    const modes = MODES.filter((m) => m.mode !== 'room' || s.roomAr !== 'unsupported');
-    if (modes.length < 2) return '';
-    return modes
-        .map(({ mode, label }) => {
-            const on = mode === s.arMode && !onPicture(s);
-            return `<button onclick="app.arMode('${mode}')" class="px-1 py-1 text-[11px] font-semibold tracking-[0.14em] transition ${on ? 'text-sky-300' : 'text-white/60 hover:text-white'}" style="text-shadow: 0 1px 4px rgba(0,0,0,.5)">${t(label)}</button>`;
-        })
-        .join('');
-}
-
-/** What the big button does now: its icon, label and whether it is busy. */
-function shutterFor(s: Readonly<AppState>): { glyph: IconName; label: string; busy: boolean } {
-    if (s.arMode === 'room') return { glyph: 'box', label: t('placeInRoom'), busy: s.roomAr === 'starting' };
-    if (s.stamps[s.exhibitId] !== undefined) return { glyph: 'check', label: t('collected'), busy: false };
-    if (isOnSite(currentAssessment(s))) return { glyph: 'award', label: t('collect'), busy: false };
-    return { glyph: 'target', label: t('bScan'), busy: s.scanning };
+/** What the big button does now (icon, label, busy), or null for no button. */
+function shutterFor(s: Readonly<AppState>): { glyph: IconName; label: string; busy: boolean; call: boolean } | null {
+    if (roomReady(s)) return { glyph: 'box', label: t('placeInRoom'), busy: false, call: true };
+    const onSite = isOnSite(currentAssessment(s));
+    if (onSite && s.stamps[s.exhibitId] !== undefined) return { glyph: 'check', label: t('collected'), busy: false, call: false };
+    if (onSite) return { glyph: 'award', label: t('collect'), busy: false, call: false };
+    if (onPicture(s)) return null; // e.g. a poster on a phone without room AR: nothing to do but look
+    return { glyph: 'target', label: t('bScan'), busy: s.scanning, call: false };
 }
 
 function shutterHtml(s: Readonly<AppState>): string {
-    const { glyph, label, busy } = shutterFor(s);
-    return `<button onclick="app.shutter()" aria-label="${label}" ${busy ? 'disabled' : ''} class="w-[76px] h-[76px] rounded-full border-4 border-white/90 flex items-center justify-center shadow-xl active:scale-95 transition ${busy ? 'opacity-60' : ''}">
+    const shutter = shutterFor(s);
+    if (!shutter) return '';
+    const { glyph, label, busy, call } = shutter;
+    return `<button onclick="app.shutter()" aria-label="${label}" ${busy ? 'disabled' : ''} class="w-[76px] h-[76px] rounded-full border-4 border-white/90 flex items-center justify-center shadow-xl active:scale-95 transition ${busy ? 'opacity-60' : ''} ${call ? 'shutter-call' : ''}">
         <span class="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center ${busy ? 'animate-pulse' : ''}">${icon(glyph, 'w-7 h-7')}</span>
     </button>`;
 }
 
 function hintFor(s: Readonly<AppState>): string {
-    if (s.imageAr !== 'off') {
-        const keys = { loading: 'hintImageLoading', scanning: 'hintScan', tracking: 'hintImageTracking', holding: 'hintImageHolding' } as const;
-        return t(keys[s.imageAr]);
-    }
-    if (s.arMode === 'room') return t(s.roomAr === 'starting' ? 'roomStarting' : 'hintRoom');
-    if (s.stamps[s.exhibitId] !== undefined) return t('collected');
-    return t(isOnSite(currentAssessment(s)) ? 'hintCollect' : 'hintStreet');
+    if (roomRunning(s)) return t('roomStarting');
+    if (s.imageAr === 'loading') return t('hintImageLoading');
+    if (roomReady(s)) return t('hintPoster');
+    if (onPicture(s)) return t(s.imageAr === 'tracking' ? 'hintImageTracking' : 'hintImageHolding');
+    if (onBuilding(s)) return t(s.stamps[s.exhibitId] !== undefined ? 'collected' : 'hintCollect');
+    return t('hintScan');
 }
 
 function renderLockChip(s: Readonly<AppState>): void {
@@ -188,7 +188,7 @@ function renderOverlay(s: Readonly<AppState>): void {
         title = t('ovFarTitle', { dist: dist(lock.distance) });
         body = t('ovFarBody', { radius: lock.radius, title: ex[s.lang].title });
         buttons = `<button onclick="app.showOnMap()" class="h-11 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-[13px] font-semibold transition">${t('ovShowMap')}</button>
-            <button onclick="app.seeModel()" class="h-11 px-4 rounded-2xl border border-white/30 bg-white/10 text-white text-[13px] font-semibold">${t('ov3d')}</button>`;
+            <button onclick="app.dismissOverlay()" class="h-11 px-4 rounded-2xl border border-white/30 bg-white/10 text-white text-[13px] font-semibold">${t('ovScanPicture')}</button>`;
     } else {
         const err = lock.headingError ?? 0;
         const side = t(err > 0 ? 'sideRight' : 'sideLeft');
@@ -275,11 +275,13 @@ export function mountAr(): void {
     const stage = $('arThree');
     const has3d = stage ? initEngine(stage, positionPins) : false;
 
-    // The camera runs while Live AR is open, except while room AR uses it.
+    // The scanner (and with it the camera) runs while Live AR is open, except
+    // while room AR uses the camera; it resumes when room AR ends. Only these
+    // two values are watched, so a scanner that failed to start is not retried in a loop.
     view(
-        (s, u) => [u.screen, s.roomAr],
+        (s, u) => [u.screen, roomRunning(s)],
         (s, u) => {
-            if (u.screen === 'ar' && !roomRunning(s)) void setArCamera(true);
+            if (u.screen === 'ar' && !roomRunning(s) && s.imageAr === 'off') void startImageAr();
         },
     );
     view(
@@ -295,14 +297,14 @@ export function mountAr(): void {
         },
     );
 
-    // The model: shown unless the picture has not been found yet.
+    // The model: shown once something was found (and to room AR, which draws it itself).
     view(
-        (s, u) => [u.screen, aiming(s)],
+        (s, u) => [u.screen, modelShown(s), roomRunning(s)],
         (s, u) => {
-            const show = has3d && u.screen === 'ar' && !aiming(s);
+            const show = has3d && u.screen === 'ar' && (modelShown(s) || roomRunning(s));
             setHidden('arThree', !show); // visible first: the engine measures it
             setEngineActive(show);
-            setHidden('arTarget', !aiming(s));
+            setHidden('arTarget', !scanning(s));
         },
     );
     view(
@@ -310,20 +312,17 @@ export function mountAr(): void {
         (s) => showModel(currentExhibit(s), s.arEra),
     );
     view(
-        (s) => [s.arMode, s.camera, s.demoMode, s.heading === null, s.coords, s.accuracy, s.exhibitId, s.imageAr],
-        (s) => setAnchorBearing(s.arMode === 'street' ? anchorBearingFor(s) : null),
+        (s) => [onBuilding(s), s.camera, s.demoMode, s.heading === null, s.coords, s.accuracy, s.exhibitId, s.imageAr],
+        (s) => setAnchorBearing(onBuilding(s) ? anchorBearingFor(s) : null),
     );
 
-    // Top: the exhibit (or, while scanning, what is happening), scan and the audio guide.
+    // Top: the exhibit (or, while scanning, what is happening) and the audio guide.
     view(
-        (s) => [s.lang, s.exhibitId, s.audioPlaying, aiming(s)],
+        (s) => [s.lang, s.exhibitId, s.audioPlaying, scanning(s)],
         (s) => {
-            const scanning = aiming(s);
-            setText('arNum', scanning ? '' : exhibitNum(s));
-            setText('arTitle', scanning ? t('scanTitle') : currentExhibit(s)[s.lang].title);
-            setHtml('arScanBtn', icon('scanEye', 'w-5 h-5'));
-            $('arScanBtn')?.setAttribute('aria-label', t('scanTitle'));
-            setHidden('arScanBtn', scanning);
+            const looking = scanning(s);
+            setText('arNum', looking ? '' : exhibitNum(s));
+            setText('arTitle', looking ? t('scanTitle') : currentExhibit(s)[s.lang].title);
             setHtml('arClose', icon('x', 'w-5 h-5'));
             $('arClose')?.setAttribute('aria-label', t('close'));
             setHtml('arAudio', icon(s.audioPlaying ? 'pause' : 'headphones', 'w-5 h-5'));
@@ -333,42 +332,40 @@ export function mountAr(): void {
     );
 
     view(
-        (s) => [s.lang, s.arEra],
-        (s) => setHtml('arDial', dialHtml(s)),
+        (s) => [s.lang, s.arEra, modelShown(s)],
+        (s) => {
+            setHidden('arDial', !modelShown(s));
+            setHtml('arDial', dialHtml(s));
+        },
     );
 
-    // Bottom: hint, modes and the big button; or the story card.
+    // Bottom: hint and the big button; or the story card.
     view(
-        (s, u) => [s.lang, s.arMode, s.roomAr, s.imageAr, s.exhibitId, s.stamps, s.scanning, s.gps, s.coords, s.accuracy, s.heading, u.story],
+        (s, u) => [s.lang, s.roomAr, s.imageAr, s.imageArTarget, s.exhibitId, s.stamps, s.scanning, s.gps, s.coords, s.accuracy, s.heading, s.demoMode, u.story],
         (s, u) => {
-            const scanning = aiming(s);
+            const story = u.story && modelShown(s);
             setText('arHint', hintFor(s));
-            setHidden('arScanCard', !scanning);
-            setText('arScanWhere', t('scanWhere'));
-            const thumb = $('arScanThumb') as HTMLImageElement | null;
-            if (thumb && !thumb.getAttribute('src')) thumb.src = AR_TARGETS_IMAGE;
-            setHtml('arModes', scanning ? '' : modesHtml(s));
-            setHtml('arShutter', scanning ? '' : shutterHtml(s));
-            setHidden('arControls', u.story);
-            setHidden('arStory', !u.story);
-            setHidden('arLockRow', s.arMode !== 'street' || s.imageAr !== 'off');
+            setHtml('arShutter', shutterHtml(s));
+            setHidden('arControls', story);
+            setHidden('arStory', !story);
+            setHidden('arLockRow', onPicture(s) || roomRunning(s));
         },
     );
 
     // Pins and the story.
     view(
-        (s, u) => [s.lang, s.exhibitId, s.hotspotIndex, s.memories, inRoom(s), aiming(s), u.story],
+        (s, u) => [s.lang, s.exhibitId, s.hotspotIndex, s.memories, inRoom(s), modelShown(s), u.story],
         (s, u) => {
             if (s.hotspotIndex > pins(s).length - 1) {
                 setState({ hotspotIndex: 0 });
                 return;
             }
             renderPins(s);
-            if (u.story) setHtml('arStory', storyHtml(s));
+            if (u.story && modelShown(s)) setHtml('arStory', storyHtml(s));
         },
     );
 
-    // Street mode: lock chip, scanner, off-target card.
+    // Location: lock chip, GPS sweep, off-target card.
     view((s) => [s.lang, s.exhibitId, s.gps, s.coords, s.accuracy, s.heading, s.demoMode, s.scanning], renderLockChip);
     view(
         (s) => [s.scanning],

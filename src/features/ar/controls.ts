@@ -1,11 +1,10 @@
 import { startCamera, stopCamera } from '../../platform/camera';
 import { startCompass } from '../../platform/compass';
-import { getState, setState, watch, type AppState, type ArMode } from '../../state/store';
+import { getState, setState, watch } from '../../state/store';
 import { t } from '../../ui/i18n';
 import { currentAssessment } from '../exhibits';
 import { setDemoMode, startGps, waitForFix } from '../location';
 import { showToast } from '../toast';
-import { isOnSite } from './verification';
 
 /** Length of the scanner sweep animation. */
 const SCAN_MS = 1900;
@@ -45,11 +44,6 @@ export function setArCamera(on: boolean): Promise<void> {
         setState({ camera: stream ? 'live' : 'simulated' });
     });
     return opening;
-}
-
-/** The AR mode Live AR opens in: street at the exhibit, else room if the phone can. */
-export function defaultArMode(s: Readonly<AppState>): ArMode {
-    return s.roomAr !== 'unsupported' && !isOnSite(currentAssessment(s)) ? 'room' : 'street';
 }
 
 /** Ask for compass access; only works inside a tap on iOS. */

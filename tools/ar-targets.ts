@@ -28,7 +28,7 @@ const images = Promise.all(
         const ex = getExhibit(target.exhibitId);
         li.innerHTML = `<img alt=""><div><b>${i + 1}. ${ex.num} ${ex.en.title}</b><br><code></code><br><span class="size"></span></div>`;
         (li.querySelector('img') as HTMLImageElement).src = src;
-        (li.querySelector('code') as HTMLElement).textContent = `public/${target.image} · ${target.placement}`;
+        (li.querySelector('code') as HTMLElement).textContent = `public/${target.image} · ${target.kind} · ${target.placement}`;
         list.append(li);
         const img = await load(src);
         const size = li.querySelector('.size') as HTMLElement;

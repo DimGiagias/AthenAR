@@ -2,8 +2,8 @@
 // (onclick="app.openExhibit(3)"); main.ts puts this object on window.app.
 import { exhibitsData } from '../data/exhibits';
 import type { ArEra, CorridorId, EraRoom, Lang } from '../data/types';
-import { defaultArMode, scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
-import { startImageAr, stopImageAr } from '../features/ar/imageAr';
+import { scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
+import { foundTarget, stopImageAr } from '../features/ar/imageAr';
 import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar/room';
 import { isOnSite } from '../features/ar/verification';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
@@ -12,7 +12,7 @@ import { toggleDemoMode, toggleGps } from '../features/location';
 import { deleteMemory, MAX_AUTHOR_CHARS, MAX_STORY_CHARS, memoryPinLabels, submitMemory } from '../features/memories';
 import { collectStamp } from '../features/stamps';
 import { showToast } from '../features/toast';
-import { getState, setState, type ArMode } from '../state/store';
+import { getState, setState } from '../state/store';
 import { t } from './i18n';
 import { focusStreetMapOn, zoomStreetMap } from './map/streetMap';
 import { getUi, setUi } from './state';
@@ -61,11 +61,11 @@ export const app = {
     back(): void {
         setUi({ screen: getUi().exhibitBack });
     },
+    /** Live AR opens as the scanner: the model appears once a picture or the building is found. */
     openAr(hotspotIndex?: number): void {
         if (typeof hotspotIndex === 'number') setState({ hotspotIndex });
         wakeCompass(); // inside the tap: lets iOS ask for motion access
         const u = getUi();
-        if (u.screen !== 'ar') setState({ arMode: defaultArMode(getState()) });
         setUi({ screen: 'ar', arBack: u.screen === 'ar' ? u.arBack : u.screen, story: typeof hotspotIndex === 'number' });
     },
     /** Bottom bar "Live AR": the nearest exhibit when GPS knows where you are. */
@@ -112,31 +112,10 @@ export const app = {
     speed: toggleAudioSpeed,
 
     // --- AR ---
-    /**
-     * Scan an exhibit's picture: Live AR opens straight on the scanner (no model
-     * until a picture is found) and the picture decides the exhibit. If scanning
-     * cannot start, a scan opened from outside AR goes back instead of showing a model.
-     */
-    scanExhibit(): void {
-        const fromAr = getUi().screen === 'ar';
-        // Before opening AR, so its first frame is already the scanner.
-        const scan = getState().imageAr === 'off' ? startImageAr() : null;
-        app.openAr();
-        void scan?.then((ok) => {
-            if (!ok && !fromAr && getUi().screen === 'ar') app.closeAr();
-        });
-    },
-    arMode(mode: ArMode): void {
-        const s = getState();
-        if (mode === s.arMode && s.imageAr === 'off') return;
-        stopImageAr();
-        setState({ arMode: mode, offTargetOverlay: false });
-    },
-    /** The big round button: the next step in the current AR mode (a scanned picture gives way). */
+    /** The big round button: the next step for what was scanned. */
     shutter(): void {
-        stopImageAr();
         const s = getState();
-        if (s.arMode === 'room') placeInRoom();
+        if (foundTarget(s)?.kind === 'poster' && s.roomAr === 'off') placeInRoom();
         else if (s.stamps[s.exhibitId] === undefined && isOnSite(currentAssessment(s))) void collectStamp();
         else void scanLock();
     },
@@ -148,11 +127,6 @@ export const app = {
     },
     dismissOverlay(): void {
         setState({ offTargetOverlay: false });
-    },
-    /** From the "too far" card: see the model here instead (in the room where the phone can). */
-    seeModel(): void {
-        stopImageAr();
-        setState({ offTargetOverlay: false, arMode: getState().roomAr !== 'unsupported' ? 'room' : 'street' });
     },
     collect(): void {
         void collectStamp();
@@ -197,9 +171,10 @@ export const app = {
             decade: field('msDecade')?.value ?? '1970s',
             text: text.slice(0, MAX_STORY_CHARS),
         });
-        // submitMemory selected the building and its new pin: show it in AR.
-        const u = getUi();
-        setUi({ memorySheet: false, screen: 'ar', arBack: u.screen === 'ar' ? u.arBack : u.screen });
+        // submitMemory selected the building: show its memories, the new one among them.
+        setUi({ memorySheet: false });
+        app.openExhibit(getState().exhibitId);
+        setUi({ exhibitTab: 'memories' });
     },
     deleteMemory(id: string): void {
         void deleteMemory(id);

@@ -1,9 +1,8 @@
 // Welcome screen, header, bottom bar, screen switching and the toast.
 import { exhibitsData } from '../../data/exhibits';
 import { stampCount } from '../../features/exhibits';
-import { $, setClass, setHidden, setHtml, setText } from '../dom';
+import { $, setClass, setHidden, setText } from '../dom';
 import { t } from '../i18n';
-import { icon } from '../icons';
 import { view } from '../state';
 
 const W_SEG_ON = 'h-8 px-3 rounded-[10px] text-xs font-extrabold bg-sky-600 text-white shadow-sm transition';
@@ -63,10 +62,7 @@ export function mountShell(): void {
             setText('hdrSub', t('headerSubtitle'));
             // The language button shows the language it switches to.
             setText('hdrLang', s.lang === 'el' ? 'EN' : 'ΕΛ');
-            $('hdrLang')?.setAttribute('aria-label', t('langSwitch'));
-            setHtml('hdrScanIcon', icon('scanEye', 'w-4 h-4'));
-            setText('hdrScanText', t('scanBtn'));
-            setText('navBadge', `${stampCount(s)}/${exhibitsData.length}`);
+            $('hdrLang')?.setAttribute('aria-label', t('langSwitch'));            setText('navBadge', `${stampCount(s)}/${exhibitsData.length}`);
         },
     );
 

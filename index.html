@@ -43,9 +43,7 @@
                     </span>
                 </button>
                 <div class="flex items-center gap-1.5">
-                    <button id="hdrLang" onclick="app.toggleLang()" class="h-9 w-9 rounded-xl bg-marble-subtle border border-sky-200 text-sky-700 text-[11px] font-extrabold hover:bg-sky-50 transition"></button>
-                    <button onclick="app.scanExhibit()" class="group h-9 px-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xs font-extrabold flex items-center shadow-sm hover:opacity-95 transition"><span id="hdrScanIcon" class="flex shrink-0"></span><span id="hdrScanText" class="max-w-0 ml-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-300 ease-out group-hover:max-w-[8rem] group-hover:ml-1.5 group-hover:opacity-100 group-focus-visible:max-w-[8rem] group-focus-visible:ml-1.5 group-focus-visible:opacity-100"></span></button>
-                </div>
+                    <button id="hdrLang" onclick="app.toggleLang()" class="h-9 w-9 rounded-xl bg-marble-subtle border border-sky-200 text-sky-700 text-[11px] font-extrabold hover:bg-sky-50 transition"></button>                </div>
             </header>
 
             <div class="relative flex-1 min-h-0">
@@ -210,16 +208,14 @@
                     </div>
                 </div>
 
-                <!-- top: close, exhibit, audio guide; the lock chip in street mode -->
+                <!-- top: close, exhibit, audio guide; the location chip unless on a picture -->
                 <div class="absolute inset-x-0 top-0 p-3 space-y-2" style="padding-top: max(12px, env(safe-area-inset-top))">
                     <div class="flex items-center gap-2">
                         <button onclick="app.closeAr()" id="arClose" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
                         <div class="glass flex-1 min-w-0 h-11 px-4 rounded-full flex items-center gap-2">
                             <span id="arNum" class="shrink-0 text-[11px] font-semibold text-sky-300"></span>
                             <span id="arTitle" class="min-w-0 truncate text-[13px] font-semibold"></span>
-                        </div>
-                        <button onclick="app.scanExhibit()" id="arScanBtn" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
-                        <button onclick="app.audio()" id="arAudio" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
+                        </div>                        <button onclick="app.audio()" id="arAudio" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
                     </div>
                     <div id="arLockRow" class="hidden flex"><button id="arLock" onclick="app.scan()"></button></div>
                 </div>
@@ -227,16 +223,10 @@
                 <!-- time dial -->
                 <div id="arDial" class="absolute right-3 top-[28%]"></div>
 
-                <!-- bottom: hint, modes, the big button; or the story card -->
+                <!-- bottom: hint and the big button; or the story card -->
                 <div class="absolute inset-x-0 bottom-0 px-3 flex flex-col items-center gap-3" style="padding-bottom: max(20px, env(safe-area-inset-bottom))">
                     <div id="arControls" class="w-full flex flex-col items-center gap-3">
-                        <span id="arHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
-                        <div id="arScanCard" class="hidden glass rounded-2xl p-2 pr-3 flex items-center gap-2.5 text-[11px] leading-snug text-slate-200">
-                            <img id="arScanThumb" alt="" class="w-9 h-12 rounded-md object-cover bg-white/20">
-                            <span id="arScanWhere"></span>
-                        </div>
-                        <div id="arModes" class="flex items-center gap-5"></div>
-                        <div id="arShutter"></div>
+                        <span id="arHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>                        <div id="arShutter"></div>
                     </div>
                     <div id="arStory" class="hidden w-full glass-light text-marble-ink rounded-3xl shadow-2xl p-4 space-y-2 max-h-[42vh] overflow-y-auto mobile-scroll"></div>
                 </div>
