@@ -43,14 +43,8 @@
                     </span>
                 </button>
                 <div class="flex items-center gap-1.5">
-                    <div class="flex p-0.5 rounded-xl bg-marble-subtle border border-sky-200">
-                        <button id="hdrLang-el" onclick="app.setLang('el')">ΕΛ</button>
-                        <button id="hdrLang-en" onclick="app.setLang('en')">EN</button>
-                    </div>
-                    <button onclick="app.go('passport')" class="h-[34px] px-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-xs font-extrabold flex items-center gap-1.5 hover:bg-sky-100 transition">
-                        <svg class="w-[15px] h-[15px] text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
-                        <span id="hdrStamps">0/11</span>
-                    </button>
+                    <button id="hdrLang" onclick="app.toggleLang()" class="h-9 w-9 rounded-xl bg-marble-subtle border border-sky-200 text-sky-700 text-[11px] font-extrabold hover:bg-sky-50 transition"></button>
+                    <button onclick="app.scanExhibit()" class="group h-9 px-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xs font-extrabold flex items-center shadow-sm hover:opacity-95 transition"><span id="hdrScanIcon" class="flex shrink-0"></span><span id="hdrScanText" class="max-w-0 ml-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-300 ease-out group-hover:max-w-[8rem] group-hover:ml-1.5 group-hover:opacity-100 group-focus-visible:max-w-[8rem] group-focus-visible:ml-1.5 group-focus-visible:opacity-100"></span></button>
                 </div>
             </header>
 
@@ -193,6 +187,7 @@
                 <button id="nav-passport" onclick="app.go('passport')">
                     <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                     <span id="navLbl-passport"></span>
+                    <span id="navBadge" class="absolute top-1 right-[16%] min-w-[30px] h-[17px] px-1.5 rounded-full bg-sky-600 text-white text-[9px] font-extrabold leading-[17px] text-center"></span>
                 </button>
             </nav>
 
@@ -223,6 +218,7 @@
                             <span id="arNum" class="shrink-0 text-[11px] font-semibold text-sky-300"></span>
                             <span id="arTitle" class="min-w-0 truncate text-[13px] font-semibold"></span>
                         </div>
+                        <button onclick="app.scanExhibit()" id="arScanBtn" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
                         <button onclick="app.audio()" id="arAudio" class="glass shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
                     </div>
                     <div id="arLockRow" class="hidden flex"><button id="arLock" onclick="app.scan()"></button></div>
@@ -235,6 +231,10 @@
                 <div class="absolute inset-x-0 bottom-0 px-3 flex flex-col items-center gap-3" style="padding-bottom: max(20px, env(safe-area-inset-bottom))">
                     <div id="arControls" class="w-full flex flex-col items-center gap-3">
                         <span id="arHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
+                        <div id="arScanCard" class="hidden glass rounded-2xl p-2 pr-3 flex items-center gap-2.5 text-[11px] leading-snug text-slate-200">
+                            <img id="arScanThumb" alt="" class="w-9 h-12 rounded-md object-cover bg-white/20">
+                            <span id="arScanWhere"></span>
+                        </div>
                         <div id="arModes" class="flex items-center gap-5"></div>
                         <div id="arShutter"></div>
                     </div>

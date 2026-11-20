@@ -1,16 +1,15 @@
 // Welcome screen, header, bottom bar, screen switching and the toast.
 import { exhibitsData } from '../../data/exhibits';
 import { stampCount } from '../../features/exhibits';
-import { $, setClass, setHidden, setText } from '../dom';
+import { $, setClass, setHidden, setHtml, setText } from '../dom';
 import { t } from '../i18n';
+import { icon } from '../icons';
 import { view } from '../state';
 
-const SEG_ON = 'h-[30px] px-2.5 rounded-[9px] text-[11px] font-extrabold bg-white text-sky-700 shadow-sm transition';
-const SEG_OFF = 'h-[30px] px-2.5 rounded-[9px] text-[11px] font-bold text-marble-muted hover:text-marble-ink transition';
 const W_SEG_ON = 'h-8 px-3 rounded-[10px] text-xs font-extrabold bg-sky-600 text-white shadow-sm transition';
 const W_SEG_OFF = 'h-8 px-3 rounded-[10px] text-xs font-bold text-marble-muted hover:text-marble-ink transition';
-const NAV_ON = 'flex flex-col items-center justify-center gap-1 rounded-2xl bg-sky-100/90 text-sky-700 text-[11px] font-extrabold transition';
-const NAV_OFF = 'flex flex-col items-center justify-center gap-1 rounded-2xl text-marble-muted hover:text-marble-ink text-[11px] font-bold transition';
+const NAV_ON = 'relative flex flex-col items-center justify-center gap-1 rounded-2xl bg-sky-100/90 text-sky-700 text-[11px] font-extrabold transition';
+const NAV_OFF = 'relative flex flex-col items-center justify-center gap-1 rounded-2xl text-marble-muted hover:text-marble-ink text-[11px] font-bold transition';
 
 export function mountShell(): void {
     // Screen switching runs first, so later watchers measure visible elements.
@@ -62,9 +61,12 @@ export function mountShell(): void {
         (s) => {
             document.documentElement.lang = s.lang;
             setText('hdrSub', t('headerSubtitle'));
-            setClass('hdrLang-el', s.lang === 'el' ? SEG_ON : SEG_OFF);
-            setClass('hdrLang-en', s.lang === 'en' ? SEG_ON : SEG_OFF);
-            setText('hdrStamps', `${stampCount(s)}/${exhibitsData.length}`);
+            // The language button shows the language it switches to.
+            setText('hdrLang', s.lang === 'el' ? 'EN' : 'ΕΛ');
+            $('hdrLang')?.setAttribute('aria-label', t('langSwitch'));
+            setHtml('hdrScanIcon', icon('scanEye', 'w-4 h-4'));
+            setText('hdrScanText', t('scanBtn'));
+            setText('navBadge', `${stampCount(s)}/${exhibitsData.length}`);
         },
     );
 

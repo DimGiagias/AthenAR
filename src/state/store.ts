@@ -20,8 +20,8 @@ export type ImageArStatus = 'off' | 'loading' | 'scanning' | 'tracking' | 'holdi
  * the floor, floor found (tap to place), or model placed.
  */
 export type RoomArStatus = 'unsupported' | 'off' | 'starting' | 'searching' | 'aiming' | 'placed';
-/** How Live AR anchors the model: to the real building, the floor, or a picture. */
-export type ArMode = 'street' | 'room' | 'image';
+/** How Live AR anchors the model: to the real building, or on the floor. A scanned picture overrides both. */
+export type ArMode = 'street' | 'room';
 
 export interface AppState {
     // language & audio guide

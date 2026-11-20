@@ -15,35 +15,41 @@ const DEMO_WRONG_OFFSET_DEG = -35;
 
 /** Increases on every on/off, so a camera that opens after AR was left is closed again. */
 let cameraRun = 0;
+/** The camera being opened, so two callers share one request. */
+let opening: Promise<void> | null = null;
 
 /**
  * The live camera behind the AR view: on while Live AR is open, off when it
  * closes or room AR needs the camera for itself. Without a camera (refused,
  * or a desktop) the view shows a simulated backdrop instead.
  */
-export async function setArCamera(on: boolean): Promise<void> {
+export function setArCamera(on: boolean): Promise<void> {
     if (!on) {
         cameraRun++;
+        opening = null;
         if (getState().camera !== 'off') {
             stopCamera();
             setState({ camera: 'off' });
         }
-        return;
+        return Promise.resolve();
     }
-    if (getState().camera !== 'off') return;
+    if (getState().camera !== 'off') return Promise.resolve();
+    if (opening) return opening;
     const mine = ++cameraRun;
-    const stream = await startCamera();
-    if (mine !== cameraRun) {
-        stopCamera();
-        return;
-    }
-    setState({ camera: stream ? 'live' : 'simulated' });
+    opening = startCamera().then((stream) => {
+        if (mine !== cameraRun) {
+            stopCamera(); // AR was left while the camera was opening
+            return;
+        }
+        opening = null;
+        setState({ camera: stream ? 'live' : 'simulated' });
+    });
+    return opening;
 }
 
-/** The AR mode Live AR opens in: street at the exhibit, else room if the phone can, else picture. */
+/** The AR mode Live AR opens in: street at the exhibit, else room if the phone can. */
 export function defaultArMode(s: Readonly<AppState>): ArMode {
-    if (isOnSite(currentAssessment(s))) return 'street';
-    return s.roomAr !== 'unsupported' ? 'room' : 'image';
+    return s.roomAr !== 'unsupported' && !isOnSite(currentAssessment(s)) ? 'room' : 'street';
 }
 
 /** Ask for compass access; only works inside a tap on iOS. */

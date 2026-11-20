@@ -3,7 +3,7 @@
 import { exhibitsData } from '../data/exhibits';
 import type { ArEra, CorridorId, EraRoom, Lang } from '../data/types';
 import { defaultArMode, scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
-import { stopImageAr, toggleImageAr } from '../features/ar/imageAr';
+import { startImageAr, stopImageAr } from '../features/ar/imageAr';
 import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar/room';
 import { isOnSite } from '../features/ar/verification';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
@@ -42,6 +42,9 @@ export const app = {
     setLang(lang: Lang): void {
         setAudioLang(lang); // narration follows the interface language
         setState({ lang });
+    },
+    toggleLang(): void {
+        app.setLang(getState().lang === 'el' ? 'en' : 'el');
     },
 
     // --- navigation ---
@@ -109,16 +112,22 @@ export const app = {
     speed: toggleAudioSpeed,
 
     // --- AR ---
+    /** Scan an exhibit's picture: Live AR opens on the camera and the picture decides the exhibit. */
+    scanExhibit(): void {
+        app.openAr();
+        if (getState().imageAr === 'off') void startImageAr();
+    },
     arMode(mode: ArMode): void {
-        if (mode === getState().arMode) return;
+        const s = getState();
+        if (mode === s.arMode && s.imageAr === 'off') return;
         stopImageAr();
         setState({ arMode: mode, offTargetOverlay: false });
     },
-    /** The big round button: the next step in the current AR mode. */
+    /** The big round button: the next step in the current AR mode (a scanned picture gives way). */
     shutter(): void {
+        stopImageAr();
         const s = getState();
         if (s.arMode === 'room') placeInRoom();
-        else if (s.arMode === 'image') void toggleImageAr();
         else if (s.stamps[s.exhibitId] === undefined && isOnSite(currentAssessment(s))) void collectStamp();
         else void scanLock();
     },
@@ -131,10 +140,10 @@ export const app = {
     dismissOverlay(): void {
         setState({ offTargetOverlay: false });
     },
-    /** From the "too far" card: see the model here instead, in the room or on the picture. */
+    /** From the "too far" card: see the model here instead (in the room where the phone can). */
     seeModel(): void {
         stopImageAr();
-        setState({ offTargetOverlay: false, arMode: getState().roomAr !== 'unsupported' ? 'room' : 'image' });
+        setState({ offTargetOverlay: false, arMode: getState().roomAr !== 'unsupported' ? 'room' : 'street' });
     },
     collect(): void {
         void collectStamp();

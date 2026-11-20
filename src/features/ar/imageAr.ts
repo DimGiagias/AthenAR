@@ -32,7 +32,7 @@ export async function toggleImageAr(): Promise<void> {
     await startImageAr();
 }
 
-async function startImageAr(): Promise<void> {
+export async function startImageAr(): Promise<void> {
     const mine = ++run;
     void startCompass(); // inside the tap: lets iOS ask for motion access
     startMotion();

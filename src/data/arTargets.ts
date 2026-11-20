@@ -30,3 +30,5 @@ export const IMAGE_TARGETS: ImageTarget[] = [
     // picks the real image for the Serafeio demo.
     { exhibitId: 0, image: 'ar/serafeio-test-poster.jpg', placement: 'upright', modelWidth: 0.9 },
 ];
+
+export const AR_TARGETS_IMAGE: string = IMAGE_TARGETS[0]?.image ?? '';
