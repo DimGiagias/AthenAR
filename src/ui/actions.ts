@@ -61,12 +61,16 @@ export const app = {
     back(): void {
         setUi({ screen: getUi().exhibitBack });
     },
-    /** Live AR opens as the scanner: the model appears once a picture or the building is found. */
+    /**
+     * Live AR opens as the scanner: the model appears once a picture or the
+     * building is found. A pin index selects that pin; its story card stays
+     * closed so the big button shows, and a tap on the pin opens it.
+     */
     openAr(hotspotIndex?: number): void {
         if (typeof hotspotIndex === 'number') setState({ hotspotIndex });
         wakeCompass(); // inside the tap: lets iOS ask for motion access
         const u = getUi();
-        setUi({ screen: 'ar', arBack: u.screen === 'ar' ? u.arBack : u.screen, story: typeof hotspotIndex === 'number' });
+        setUi({ screen: 'ar', arBack: u.screen === 'ar' ? u.arBack : u.screen, story: false });
     },
     /** Bottom bar "Live AR": the nearest exhibit when GPS knows where you are. */
     liveAr(): void {

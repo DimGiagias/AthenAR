@@ -23,7 +23,7 @@ import { escapeHtml } from '../escapeHtml';
 import { t } from '../i18n';
 import { icon, type IconName } from '../icons';
 import { dist } from '../shared';
-import { view } from '../state';
+import { setUi, view } from '../state';
 
 const PIN_BASE = 'ar-node-pin pointer-events-auto absolute w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition shadow-lg';
 const PIN_ON = 'bg-sky-500 text-white border-[3px] border-white';
@@ -349,6 +349,15 @@ export function mountAr(): void {
             setHidden('arControls', story);
             setHidden('arStory', !story);
             setHidden('arLockRow', onPicture(s) || roomRunning(s));
+        },
+    );
+
+    // When the model goes away (picture or lock lost), its story closes, so the
+    // next find starts with the big button showing.
+    view(
+        (s) => [modelShown(s)],
+        (s) => {
+            if (!modelShown(s)) setUi({ story: false });
         },
     );
 
