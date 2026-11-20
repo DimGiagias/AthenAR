@@ -192,7 +192,15 @@ function mountSheet(): void {
 export function mountExplore(): void {
     mountSheet(); // first, so the map starts at its visible size
     const host = $('exMap');
-    if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true });
+    const northBtn = $('exNorthBtn');
+    const needle = $('exNorthNeedle');
+    const onBearing = (bearing: number): void => {
+        const turned = Math.abs(bearing) > 0.5;
+        northBtn?.classList.toggle('hidden', !turned);
+        northBtn?.classList.toggle('flex', turned);
+        if (needle) needle.style.transform = `rotate(${-bearing}deg)`;
+    };
+    if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true, onBearing });
 
     view(
         (s) => [s.lang, s.eraFilter, s.corridorFilter, s.exhibitId, s.gps, s.coords, s.demoMode],

@@ -4,7 +4,9 @@
 //
 // Like the 3D engine, this is a drawing module: it is given a container and a
 // plain description of what to show (`MapView`), and never reads the store.
-// Pan with one finger, zoom by pinching, double-tapping or the + / − buttons.
+// Pan with one finger, zoom by pinching, double-tapping or the + / − buttons,
+// rotate by twisting two fingers (right-drag with a mouse). The compass button
+// turns it back to north up.
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { GeoJSONSource, LngLatBoundsLike, Map as MapLibreMap, Marker } from 'maplibre-gl';
@@ -86,6 +88,8 @@ export interface StreetMapOptions {
      * centre (which would make the whole map jump by half the change).
      */
     keepTopOnResize?: boolean;
+    /** Called whenever the map turns, with its bearing in degrees (0 = north up). */
+    onBearing?: (bearing: number) => void;
 }
 
 export async function mountStreetMap(container: HTMLElement, onPick: (id: number) => void, options: StreetMapOptions = {}): Promise<void> {
@@ -109,7 +113,6 @@ export async function mountStreetMap(container: HTMLElement, onPick: (id: number
                 [east, north],
             ],
             attributionControl: false, // credited in the caption under the map
-            dragRotate: false,
             pitchWithRotate: false,
             touchPitch: false,
             keyboard: false,
@@ -120,8 +123,8 @@ export async function mountStreetMap(container: HTMLElement, onPick: (id: number
         container.classList.add('map-unavailable');
         return;
     }
-    // North stays up: two fingers zoom, they do not twist the map.
-    map.touchZoomRotate.disableRotation();
+    const onBearing = options.onBearing;
+    if (onBearing) map.on('rotate', () => map && onBearing(map.getBearing()));
 
     map.on('zoom', syncLabelVisibility);
     map.on('load', () => {
@@ -157,6 +160,11 @@ export function updateStreetMap(next: MapView): void {
 
 export function zoomStreetMap(steps: number): void {
     map?.easeTo({ zoom: map.getZoom() + steps, duration: 250 });
+}
+
+/** Turn the map back to north up. */
+export function resetStreetMapNorth(): void {
+    map?.easeTo({ bearing: 0, duration: 350 });
 }
 
 /** Zoom used when the map moves to one exhibit. */
@@ -312,5 +320,6 @@ function fitToFocus(animate: boolean): void {
         [Math.min(...lngs), Math.min(...lats)],
         [Math.max(...lngs), Math.max(...lats)],
     ];
-    map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: 16, duration: animate ? 600 : 0 });
+    // keep the way the map is turned (fitBounds would otherwise snap it to north up)
+    map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: 16, bearing: map.getBearing(), duration: animate ? 600 : 0 });
 }

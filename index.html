@@ -64,6 +64,13 @@
                         <div class="absolute right-2.5 bottom-[calc(100%+12px)] flex flex-col bg-white/95 backdrop-blur-md border border-sky-200 rounded-xl shadow-sm overflow-hidden">
                             <button onclick="app.zoomMap(1)" aria-label="Zoom in" class="w-10 h-9 border-b border-sky-100 text-sky-700 text-base font-semibold hover:bg-sky-50">+</button>
                             <button onclick="app.zoomMap(-1)" aria-label="Zoom out" class="w-10 h-9 text-sky-700 text-base font-semibold hover:bg-sky-50">−</button>
+                            <!-- Shown only while the map is turned; the needle points north, a tap turns the map back (explore.ts) -->
+                            <button id="exNorthBtn" onclick="app.mapNorthUp()" aria-label="North up" class="hidden w-10 h-9 border-t border-sky-100 hover:bg-sky-50 items-center justify-center">
+                                <svg id="exNorthNeedle" viewBox="0 0 24 24" class="w-5 h-5 transition-transform duration-75" aria-hidden="true">
+                                    <path d="M12 3 16 12H8z" fill="#E11D48" />
+                                    <path d="M12 21 8 12h8z" fill="#94A3B8" />
+                                </svg>
+                            </button>
                         </div>
                         <span id="exCredit" class="absolute left-2.5 bottom-[calc(100%+8px)] px-1.5 py-px rounded-[5px] bg-white/90 text-[10px] text-marble-muted pointer-events-none"></span>
                         <div id="exSheetGrab" class="shrink-0 touch-none select-none cursor-grab active:cursor-grabbing">

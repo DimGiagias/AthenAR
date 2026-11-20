@@ -14,7 +14,7 @@ import { collectStamp } from '../features/stamps';
 import { showToast } from '../features/toast';
 import { getState, setState } from '../state/store';
 import { t } from './i18n';
-import { focusStreetMapOn, zoomStreetMap } from './map/streetMap';
+import { focusStreetMapOn, resetStreetMapNorth, zoomStreetMap } from './map/streetMap';
 import { getUi, setUi } from './state';
 
 const field = (id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null =>
@@ -93,6 +93,9 @@ export const app = {
     toggleGps,
     zoomMap(steps: number): void {
         zoomStreetMap(steps);
+    },
+    mapNorthUp(): void {
+        resetStreetMapNorth();
     },
     /** A tap on an exhibit card in the list: select it and show it on the map. */
     focusExhibit(id: number): void {
