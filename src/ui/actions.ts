@@ -8,7 +8,7 @@ import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar
 import { isOnSite } from '../features/ar/verification';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
 import { currentAssessment, getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
-import { toggleDemoMode } from '../features/location';
+import { toggleDemoMode, toggleGps } from '../features/location';
 import { deleteMemory, MAX_AUTHOR_CHARS, MAX_STORY_CHARS, memoryPinLabels, submitMemory } from '../features/memories';
 import { collectStamp } from '../features/stamps';
 import { showToast } from '../features/toast';
@@ -87,6 +87,7 @@ export const app = {
     corridor(value: string): void {
         setState({ corridorFilter: value as CorridorId | 'all' });
     },
+    toggleGps,
     zoomMap(steps: number): void {
         zoomStreetMap(steps);
     },

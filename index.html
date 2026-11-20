@@ -61,6 +61,11 @@
                     <!-- The map: its height is set from the sheet (explore.ts), so it covers only what you can see.
                          MapLibre makes this position:relative, so it needs an explicit size. -->
                     <div id="exMap" class="absolute inset-0 w-full h-full"></div>
+                    <!-- GPS on/off, top right of the map (explore.ts sets its dot and label) -->
+                    <button id="exGpsBtn" onclick="app.toggleGps()" class="absolute top-2.5 right-2.5 z-10 h-8 px-2.5 rounded-xl bg-white/95 hover:bg-sky-50 backdrop-blur-md border border-sky-200 shadow-sm text-[11px] font-semibold text-sky-700 flex items-center gap-1.5 transition">
+                        <span id="exGpsDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span id="exGpsText"></span>
+                    </button>
                     <!-- The sheet lies over the map. Drag its top edge (or tap it) to slide it down to a strip and give the map nearly the whole screen. -->
                     <div id="exSheet" style="height: min(calc(54% + 1.5rem), calc(100% - 196px))" class="absolute inset-x-0 bottom-0 z-10 bg-white rounded-t-3xl border-t border-sky-200 shadow-[0_-8px_24px_rgba(2,132,199,0.08)] flex flex-col">
                         <!-- Map controls ride just above the sheet's top edge -->

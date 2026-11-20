@@ -199,6 +199,22 @@ export function mountExplore(): void {
         (s) => updateStreetMap(mapView(s)),
     );
 
+    // GPS pill: green when on, pulsing while locating, amber when blocked or in Demo Mode.
+    view(
+        (s) => [s.lang, s.gps, s.demoMode],
+        (s) => {
+            let dot = 'bg-slate-400';
+            let label = t('gpsPillOff');
+            if (s.demoMode) [dot, label] = ['bg-amber-500', t('gpsDemoPill')];
+            else if (s.gps === 'active') [dot, label] = ['bg-emerald-500', t('gpsPillOn')];
+            else if (s.gps === 'acquiring') [dot, label] = ['bg-sky-500 animate-pulse', t('gpsPillLocating')];
+            else if (s.gps !== 'off') [dot, label] = ['bg-amber-500', t('gpsPillBlocked')];
+            setClass('exGpsDot', `w-2 h-2 rounded-full ${dot}`);
+            setText('exGpsText', label);
+            $('exGpsBtn')?.setAttribute('aria-label', t('gpsPillAria'));
+        },
+    );
+
     view(
         (s) => [s.lang],
         () => {

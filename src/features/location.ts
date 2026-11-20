@@ -37,6 +37,14 @@ function onFail(reason: GeoFailure): void {
     settleWaiters(false);
 }
 
+/** Start the position watch only (no compass), unless one is already running. Safe at launch. */
+export function startPosition(): void {
+    const s = getState();
+    if (s.demoMode || s.gps === 'acquiring' || s.gps === 'active') return;
+    setState({ gps: 'acquiring' });
+    startWatching({ onFix, onFail });
+}
+
 /** Start real GPS and compass. Call from a user gesture (iOS compass prompt). */
 export function startGps(): void {
     if (getState().demoMode) return;
@@ -49,6 +57,14 @@ export function stopGps(): void {
     stopWatching();
     settleWaiters(false);
     setState({ gps: 'off', coords: null, accuracy: null });
+}
+
+/** The map's GPS pill: stop when on (or leave Demo Mode), otherwise start. */
+export function toggleGps(): void {
+    const s = getState();
+    if (s.demoMode) setDemoMode(false);
+    else if (s.gps === 'active' || s.gps === 'acquiring') stopGps();
+    else startGps();
 }
 
 /** Resolves true once a position is known, false on failure or timeout. */

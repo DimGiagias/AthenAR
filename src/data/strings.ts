@@ -138,6 +138,11 @@ export const uiStrings = {
 
         // --- map ---
         gpsDemoPill: 'Demo Mode',
+        gpsPillOn: 'GPS ενεργό',
+        gpsPillOff: 'GPS κλειστό',
+        gpsPillLocating: 'Εντοπισμός…',
+        gpsPillBlocked: 'Χωρίς GPS',
+        gpsPillAria: 'Ενεργοποίηση ή απενεργοποίηση GPS',
         youLabel: '📍 ΕΣΥ (GPS)',
         youLabelDemo: '🧪 ΕΣΥ (DEMO)',
 
@@ -314,6 +319,11 @@ export const uiStrings = {
 
         // --- map ---
         gpsDemoPill: 'Demo Mode',
+        gpsPillOn: 'GPS on',
+        gpsPillOff: 'GPS off',
+        gpsPillLocating: 'Locating…',
+        gpsPillBlocked: 'No GPS',
+        gpsPillAria: 'Turn GPS on or off',
         youLabel: '📍 YOU (GPS)',
         youLabelDemo: '🧪 YOU (DEMO)',
 

@@ -4,7 +4,7 @@ import { initArControls } from './features/ar/controls';
 import { initImageAr } from './features/ar/imageAr';
 import { detectRoomAr } from './features/ar/room';
 import { initAudio } from './features/audio';
-import { initLocation } from './features/location';
+import { initLocation, startPosition } from './features/location';
 import { loadMemories } from './features/memories';
 import { initPlatform } from './platform/native';
 import { app } from './ui/actions';
@@ -31,6 +31,7 @@ function boot(): void {
     mountMemorySheet();
 
     initLocation();
+    startPosition();
     initAudio();
     initArControls();
     initImageAr();
