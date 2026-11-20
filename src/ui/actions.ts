@@ -112,10 +112,19 @@ export const app = {
     speed: toggleAudioSpeed,
 
     // --- AR ---
-    /** Scan an exhibit's picture: Live AR opens on the camera and the picture decides the exhibit. */
+    /**
+     * Scan an exhibit's picture: Live AR opens straight on the scanner (no model
+     * until a picture is found) and the picture decides the exhibit. If scanning
+     * cannot start, a scan opened from outside AR goes back instead of showing a model.
+     */
     scanExhibit(): void {
+        const fromAr = getUi().screen === 'ar';
+        // Before opening AR, so its first frame is already the scanner.
+        const scan = getState().imageAr === 'off' ? startImageAr() : null;
         app.openAr();
-        if (getState().imageAr === 'off') void startImageAr();
+        void scan?.then((ok) => {
+            if (!ok && !fromAr && getUi().screen === 'ar') app.closeAr();
+        });
     },
     arMode(mode: ArMode): void {
         const s = getState();

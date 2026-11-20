@@ -24,15 +24,8 @@ let run = 0;
 
 const targetsUrl = (): string => new URL(AR_TARGETS_FILE, document.baseURI).href;
 
-export async function toggleImageAr(): Promise<void> {
-    if (getState().imageAr !== 'off') {
-        stopImageAr();
-        return;
-    }
-    await startImageAr();
-}
-
-export async function startImageAr(): Promise<void> {
+/** Start scanning for a picture. Resolves false when it could not start (no camera, or the tracker failed). */
+export async function startImageAr(): Promise<boolean> {
     const mine = ++run;
     void startCompass(); // inside the tap: lets iOS ask for motion access
     startMotion();
@@ -41,9 +34,10 @@ export async function startImageAr(): Promise<void> {
     await setArCamera(true);
     const stream = getCameraStream();
     if (getState().camera !== 'live' || !stream) {
-        if (mine === run) setState({ imageAr: 'off' });
+        if (mine !== run) return true; // stopped while the camera was opening
+        setState({ imageAr: 'off' });
         showToast(t('toastImageArNoCamera'));
-        return;
+        return false;
     }
 
     try {
@@ -52,16 +46,18 @@ export async function startImageAr(): Promise<void> {
         });
         if (mine !== run) {
             started.stop(); // switched off while loading
-            return;
+            return true;
         }
         session = started;
         setImageTracking({ projection: started.projection, inputWidth: started.inputWidth, inputHeight: started.inputHeight });
         setState({ imageAr: 'scanning' });
+        return true;
     } catch (err) {
         console.warn('Image AR failed to start', err);
-        if (mine !== run) return;
+        if (mine !== run) return true;
         setState({ imageAr: 'off' });
         showToast(t('toastImageArError'));
+        return false;
     }
 }
 
