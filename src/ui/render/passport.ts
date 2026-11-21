@@ -129,10 +129,24 @@ function memoriesCard(s: Readonly<AppState>): string {
         </div>`;
 }
 
+/** Install the app, for anyone who skipped the sheet; gone once installed. */
+function installRow(s: Readonly<AppState>): string {
+    if (s.installable === null) return '';
+    const ios = s.installable === 'ios';
+    return `<div class="bg-white border border-sky-200 rounded-3xl p-3 flex items-center gap-3">
+        <img src="icons/icon-192.png" alt="" class="shrink-0 w-10 h-10 rounded-xl">
+        <span class="flex-1 min-w-0">
+            <span class="block text-[13px] font-semibold text-marble-ink">${t('installRowTitle')}</span>
+            <span class="block text-[11px] leading-snug text-marble-muted mt-0.5">${t('installRowSub')}</span>
+        </span>
+        <button onclick="app.${ios ? 'installHow' : 'install'}()" class="shrink-0 h-9 px-3.5 rounded-xl ${PRIMARY} text-xs font-semibold">${t(ios ? 'installRowHow' : 'installBtn')}</button>
+    </div>`;
+}
+
 export function mountPassport(): void {
     view(
-        (s) => [s.lang, s.stamps, s.memories, s.gps, s.coords, s.demoMode],
-        (s) => setHtml('ppMain', stampsCard(s) + nextStampCard(s) + memoriesCard(s)),
+        (s) => [s.lang, s.stamps, s.memories, s.gps, s.coords, s.demoMode, s.installable],
+        (s) => setHtml('ppMain', stampsCard(s) + installRow(s) + nextStampCard(s) + memoriesCard(s)),
     );
 
     // Presenter tools: rendered separately so the open/closed state survives updates.

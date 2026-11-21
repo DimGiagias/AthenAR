@@ -1,9 +1,6 @@
 // Build-time settings. The GitHub workflows fill these in from the repository
 // they run in, so no address is hard-coded; a local build simply has none.
 
-/** Direct download link of the latest Android APK ('' when unknown). */
-export const APK_URL: string = import.meta.env.VITE_APK_URL ?? '';
-
 /** GitHub API address of the latest release, used by the app's update check. */
 export const LATEST_RELEASE_API: string = import.meta.env.VITE_LATEST_RELEASE_API ?? '';
 

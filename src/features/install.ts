@@ -1,54 +1,75 @@
-// Getting the app onto a phone: the Android APK, or "Add to Home Screen".
-import { APK_URL, APP_VERSION, LATEST_RELEASE_API } from '../config';
+// Getting the app onto the phone's home screen.
+//  - Chrome (Android): the browser's own install prompt. That version keeps
+//    room AR, which the APK cannot have (Android's WebView has no WebXR).
+//  - iPhone: websites get no install button, so the sheet shows Safari's steps.
+// Each phone is offered the sheet once; the passport keeps an install row.
+import { APP_VERSION, LATEST_RELEASE_API } from '../config';
 import { isNativeApp } from '../platform/native';
 import { loadJson, saveJson } from '../platform/storage';
-import { setState } from '../state/store';
+import { getState, setState } from '../state/store';
 import { t } from '../ui/i18n';
 import { showToast } from './toast';
 
-type InstallPrompt = Event & { prompt: () => void };
+type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> };
 let deferredPrompt: InstallPrompt | null = null;
 const SEEN_KEY = 'athenar.installOffered.v1';
 
-const isAndroid = (): boolean => /android/i.test(navigator.userAgent);
+const isIos = (): boolean =>
+    /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
 const isStandalone = (): boolean =>
     window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 const isPhoneSized = (): boolean => window.matchMedia('(max-width: 639px)').matches;
 
-/** Keep the browser's own install prompt so our button can show it. */
-export function captureInstallPrompt(): void {
+/** Find out how this browser can install the app; nothing to do once installed. */
+export function initInstall(): void {
+    if (isNativeApp() || isStandalone()) return;
+    if (isIos()) setState({ installable: 'ios' });
+    // Chrome hands over its prompt only when the app can be installed, and keeps it for our button.
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e as InstallPrompt;
+        setState({ installable: 'prompt' });
+    });
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        setState({ installable: null, installSheet: false });
+        showToast(t('toastInstalled'));
     });
 }
 
-/** Install: the APK on Android, the browser's prompt where it has one, otherwise a hint. */
-export function install(): void {
-    setState({ modalQr: false });
-    if (isNativeApp() || isStandalone()) {
-        showToast(t('toastAlreadyInstalled'));
-    } else if (isAndroid() && APK_URL) {
-        window.location.href = APK_URL; // real app from GitHub Releases
-    } else if (deferredPrompt) {
-        deferredPrompt.prompt();
-    } else {
-        showToast(t('toastInstallHint')); // iPhone: Share -> Add to Home Screen
+/** Show the "get the app" sheet, once per phone (never on a computer). */
+export function offerInstallOnce(): void {
+    if (getState().installable === null || !isPhoneSized()) return;
+    if (loadJson<boolean>(SEEN_KEY, false)) return;
+    saveJson(SEEN_KEY, true);
+    setState({ installSheet: true });
+}
+
+export function showInstallSheet(): void {
+    if (getState().installable !== null) setState({ installSheet: true });
+}
+
+export function closeInstallSheet(): void {
+    setState({ installSheet: false });
+}
+
+/** The install button: Chrome's own prompt. It can be used only once. */
+export async function install(): Promise<void> {
+    const prompt = deferredPrompt;
+    if (!prompt) return;
+    deferredPrompt = null;
+    setState({ installSheet: false });
+    try {
+        await prompt.prompt();
+        const { outcome } = await prompt.userChoice;
+        // Accepted: 'appinstalled' follows. Dismissed: Chrome offers again on a later visit.
+        if (outcome === 'dismissed') setState({ installable: null });
+    } catch {
+        setState({ installable: null });
     }
 }
 
-/**
- * Someone who opened the link on a phone (typically by scanning the QR code)
- * is offered the install options once.
- */
-export function offerInstallOnce(): void {
-    if (isNativeApp() || isStandalone() || !isPhoneSized()) return;
-    if (loadJson<boolean>(SEEN_KEY, false)) return;
-    saveJson(SEEN_KEY, true);
-    setState({ modalQr: true });
-}
-
-/** Native app only: say so when a newer release exists (the PWA updates itself). */
+/** Native app only: say so when a newer release exists (the web app updates itself). */
 export async function checkForUpdate(): Promise<void> {
     if (!isNativeApp() || !LATEST_RELEASE_API || !APP_VERSION) return;
     try {

@@ -7,6 +7,7 @@ import { foundTarget, stopImageAr } from '../features/ar/imageAr';
 import { exitRoom, placeHere, placeInRoom, resetRoomSize, resetRoomTurn, toggleRoomSpin } from '../features/ar/room';
 import { isOnSite } from '../features/ar/verification';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
+import { closeInstallSheet, install, showInstallSheet } from '../features/install';
 import { currentAssessment, getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
 import { toggleDemoMode, toggleGps } from '../features/location';
 import { deleteMemory, MAX_AUTHOR_CHARS, MAX_STORY_CHARS, memoryPinLabels, submitMemory } from '../features/memories';
@@ -43,6 +44,14 @@ export const app = {
         setAudioLang(lang); // narration follows the interface language
         setState({ lang });
     },
+    // --- getting the app ---
+    install(): void {
+        void install();
+    },
+    /** iPhone: the sheet with Safari's steps. */
+    installHow: showInstallSheet,
+    closeInstall: closeInstallSheet,
+
     toggleLang(): void {
         app.setLang(getState().lang === 'el' ? 'en' : 'el');
     },

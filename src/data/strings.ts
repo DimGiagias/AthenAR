@@ -153,7 +153,6 @@ export const uiStrings = {
         youLabelDemo: '🧪 ΕΣΥ (DEMO)',
 
         // --- toasts ---
-        toastInstallHint: '📲 Στο μενού του κινητού σας πατήστε «Προσθήκη στην Αρχική Οθόνη» για εγκατάσταση!',
         toastStampAdded: '🏅 Νέα Σφραγίδα προστέθηκε στο Πολιτιστικό Διαβατήριο!',
         toastStampTooFar: '📍 Απέχεις {dist} από το έκθεμα. Η σφραγίδα δίνεται μόνο επί τόπου (έως {radius}m).',
         toastStampLocating: '📡 Εντοπίζω τη θέση σου για τη σφραγίδα…',
@@ -164,8 +163,22 @@ export const uiStrings = {
         toastDemoOff: 'Demo Mode ανενεργό — πραγματικοί αισθητήρες.',
         toastNoVoice: '🔇 Δεν βρέθηκε φωνή αφήγησης στη συσκευή. Το κείμενο της ξενάγησης είναι παρακάτω.',
         toastLocked: '🎯 Κλείδωμα θέσης & κατεύθυνσης ({score}%)!',
-        toastAlreadyInstalled: '✅ Η εφαρμογή είναι ήδη εγκατεστημένη.',
+        toastInstalled: '✅ Το AthenAR είναι στην αρχική σου οθόνη.',
         toastUpdateAvailable: '⬆️ Διαθέσιμη νέα έκδοση {version} — κατεβάστε την ξανά από το QR ή τη σελίδα της εφαρμογής.',
+        // --- install sheet & passport row ---
+        installTitle: 'Βάλε το AthenAR στο κινητό σου',
+        installSub: 'Ένα εικονίδιο στην αρχική οθόνη, σαν κανονική εφαρμογή.',
+        installPerkFast: 'Ανοίγει αμέσως, σε πλήρη οθόνη',
+        installPerkOffline: 'Δουλεύει και χωρίς ίντερνετ',
+        installPerkKeep: 'Κρατά το διαβατήριο και τις μνήμες σου',
+        installBtn: 'Εγκατάσταση',
+        installLater: 'Όχι τώρα',
+        installOk: 'Εντάξει',
+        installIosStep1: 'Στο Safari, πάτα «Κοινοποίηση» (ή «⋯» και μετά «Κοινοποίηση»)',
+        installIosStep2: 'Διάλεξε «Προσθήκη στην οθόνη Αφετηρίας»',
+        installRowTitle: 'Εγκατάσταση εφαρμογής',
+        installRowSub: 'Στην αρχική οθόνη, για χρήση και χωρίς ίντερνετ.',
+        installRowHow: 'Πώς;',
 
         // --- AR viewport ---
         toastImageArFound: '📌 Βρέθηκε η εικόνα: {title}',
@@ -340,7 +353,6 @@ export const uiStrings = {
         youLabelDemo: '🧪 YOU (DEMO)',
 
         // --- toasts ---
-        toastInstallHint: '📲 Tap "Add to Home Screen" in your mobile browser menu to install as a full-screen app!',
         toastStampAdded: '🏅 New Stamp added to your Athens Museum Passport!',
         toastStampTooFar: '📍 You are {dist} from this exhibit. Stamps are collected on site (within {radius}m).',
         toastStampLocating: '📡 Finding your location for the stamp…',
@@ -351,8 +363,21 @@ export const uiStrings = {
         toastDemoOff: 'Demo Mode off — real sensors.',
         toastNoVoice: '🔇 No narration voice is available on this device. The tour text is shown below.',
         toastLocked: '🎯 Location & direction locked ({score}%)!',
-        toastAlreadyInstalled: '✅ The app is already installed.',
+        toastInstalled: '✅ AthenAR is on your home screen.',
         toastUpdateAvailable: '⬆️ Version {version} is available — download it again from the QR code or the app page.',
+        installTitle: 'Put AthenAR on your phone',
+        installSub: 'An icon on your home screen, like a regular app.',
+        installPerkFast: 'Opens instantly, full screen',
+        installPerkOffline: 'Works without internet too',
+        installPerkKeep: 'Keeps your passport and memories',
+        installBtn: 'Install',
+        installLater: 'Not now',
+        installOk: 'OK',
+        installIosStep1: 'In Safari, tap Share (or ⋯, then Share)',
+        installIosStep2: 'Choose "Add to Home Screen"',
+        installRowTitle: 'Install the app',
+        installRowSub: 'On your home screen, works offline too.',
+        installRowHow: 'How?',
 
         // --- AR viewport ---
         toastImageArFound: '📌 Image found: {title}',

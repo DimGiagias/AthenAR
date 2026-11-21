@@ -5,6 +5,7 @@ import { initArControls } from './features/ar/controls';
 import { initImageAr } from './features/ar/imageAr';
 import { detectRoomAr } from './features/ar/room';
 import { initAudio } from './features/audio';
+import { checkForUpdate, initInstall } from './features/install';
 import { initLocation, startPosition } from './features/location';
 import { loadMemories } from './features/memories';
 import { initPlatform } from './platform/native';
@@ -15,6 +16,7 @@ import { mountExhibit } from './ui/render/exhibit';
 import { mountExplore } from './ui/render/explore';
 import { mountPassport } from './ui/render/passport';
 import { mountShell } from './ui/render/shell';
+import { mountInstallSheet } from './ui/render/installSheet';
 import { mountMemorySheet } from './ui/render/sheet';
 import { setUi } from './ui/state';
 
@@ -49,6 +51,7 @@ function boot(): void {
     mountAr();
     mountPassport();
     mountMemorySheet();
+    mountInstallSheet();
 
     initLocation();
     startPosition();
@@ -58,6 +61,8 @@ function boot(): void {
     void loadMemories();
     void detectRoomAr();
     void initPlatform();
+    initInstall();
+    void checkForUpdate();
     openFromLink();
 }
 

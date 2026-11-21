@@ -72,7 +72,10 @@ export interface AppState {
 
     // chrome
     toast: { text: string; seq: number } | null;
-    modalQr: boolean;
+    /** How this browser can install the app: Chrome's prompt, Safari's steps (iPhone), or not at all. */
+    installable: 'prompt' | 'ios' | null;
+    /** The "get the app" sheet is open. */
+    installSheet: boolean;
 }
 
 const PERSIST_KEY = 'athenar.state.v1';
@@ -115,7 +118,8 @@ let state: AppState = {
     memories: [],
 
     toast: null,
-    modalQr: false,
+    installable: null,
+    installSheet: false,
 };
 
 interface Watcher {

@@ -30,9 +30,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-        env:
-          # Lets the install screen offer the Android app from the latest release.
-          VITE_APK_URL: https://github.com/${{ github.repository }}/releases/latest/download/athenar.apk
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
