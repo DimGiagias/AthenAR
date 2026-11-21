@@ -5,6 +5,7 @@
 //  - feature code changes state with setState() and never touches the DOM;
 //  - UI code reads state inside watch() callbacks and only writes the DOM.
 import type { ArEra, EraRoom, Lang, Memory } from '../data/types';
+import { START_SCALE } from '../features/ar/roomControls';
 import { loadJson, saveJson } from '../platform/storage';
 
 export type Tab = 'explore' | 'ar' | 'memories';
@@ -43,8 +44,10 @@ export interface AppState {
     /** Index into IMAGE_TARGETS (data/arTargets.ts) of the image last found, or null. */
     imageArTarget: number | null;
     roomAr: RoomArStatus;
-    /** Index into ROOM_SCALES (features/ar/room.ts). */
-    roomSize: number;
+    /** Room AR model size, metres per model unit (features/ar/roomControls.ts). */
+    roomScale: number;
+    /** Room AR turntable: the model turns slowly on its own. */
+    roomSpin: boolean;
 
     // sensors
     gps: GpsStatus;
@@ -95,7 +98,8 @@ let state: AppState = {
     imageAr: 'off',
     imageArTarget: null,
     roomAr: 'unsupported',
-    roomSize: 1,
+    roomScale: START_SCALE,
+    roomSpin: false,
 
     gps: 'off',
     coords: null,

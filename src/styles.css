@@ -98,6 +98,22 @@ h1, h2, h3, h4 {
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
 }
+/* Room AR tools: an open tool's button and the turntable's play button */
+.glass.tool-on { background: #0EA5E9; border-color: #fff; }
+@keyframes panelRise { from { opacity: 0; transform: translateY(8px); } }
+.panel-rise { animation: panelRise 0.18s ease-out; }
+/* Room AR rulers: the scale slides under a fixed blue mark */
+.ruler { position: relative; flex-shrink: 0; height: 54px; border-radius: 22px; overflow: hidden; cursor: ew-resize; touch-action: none; user-select: none; }
+.ruler::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, rgba(15, 23, 42, 0.7), transparent 22%, transparent 78%, rgba(15, 23, 42, 0.7));
+}
+.ruler-val { position: absolute; left: 0; right: 0; top: 6px; text-align: center; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.ruler-marks { position: absolute; inset: 0; }
+.ruler-tick { position: absolute; top: 24px; width: 1px; height: 8px; background: rgba(255, 255, 255, 0.45); }
+.ruler-major { position: absolute; top: 24px; width: 2px; height: 12px; margin-left: -1px; background: #fff; }
+.ruler-name { position: absolute; top: 37px; transform: translateX(-50%); font-size: 9px; font-weight: 600; color: rgba(255, 255, 255, 0.8); white-space: nowrap; }
+.ruler-mark { position: absolute; left: 50%; top: 20px; width: 2px; height: 18px; margin-left: -1px; border-radius: 1px; background: #38BDF8; }
 /* "Move the phone slowly": the gesture ARCore apps teach */
 @keyframes coachSway { 0%, 100% { transform: translateX(-26px) rotate(-8deg); } 50% { transform: translateX(26px) rotate(8deg); } }
 .coach-phone { animation: coachSway 2.4s ease-in-out infinite; }

@@ -4,15 +4,15 @@
 //  - a poster: the model stands on it, and the big button puts it full size
 //    in the visitor's space (room AR, where the phone can);
 //  - the real building, by GPS + compass lock: the model appears over it.
-// Glass controls float over the camera: the exhibit at the top, a time dial on
-// the right edge, and at the bottom a hint and one big button that does the
-// next step. Pins on the model open a story card. While room AR runs, the same
-// controls live in the WebXR overlay (xr*).
+// Glass controls float over the camera: the exhibit at the top, and at the
+// bottom a hint and one big button that does the next step, with the time chip
+// to its right. Pins on the model open a story card. While room AR runs, the
+// same controls live in the WebXR overlay (xr*), plus size and rotate to the
+// left of the big button (roomTools.ts).
 import type { ArEra, Hotspot } from '../../data/types';
 import { anchorBearingFor } from '../../features/ar/anchor';
 import { foundTarget, startImageAr } from '../../features/ar/imageAr';
-import { ROOM_SCALES } from '../../features/ar/room';
-import { initEngine, projectHotspot, roomModelWidth, setAnchorBearing, setEngineActive, showModel } from '../../features/ar/three/engine';
+import { initEngine, projectHotspot, setAnchorBearing, setEngineActive, showModel } from '../../features/ar/three/engine';
 import { isOnSite } from '../../features/ar/verification';
 import { currentAssessment, currentExhibit, hotspotsFor } from '../../features/exhibits';
 import { memoryPinLabels } from '../../features/memories';
@@ -23,7 +23,8 @@ import { escapeHtml } from '../escapeHtml';
 import { t } from '../i18n';
 import { icon, type IconName } from '../icons';
 import { dist } from '../shared';
-import { setUi, view } from '../state';
+import { setUi, view, type RoomTool } from '../state';
+import { bindRulers, CONTROL_LABEL, refreshRoomTools, roomPanelHtml, roomToolsHtml } from './roomTools';
 
 const PIN_BASE = 'ar-node-pin pointer-events-auto absolute w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition shadow-lg';
 const PIN_ON = 'bg-sky-500 text-white border-[3px] border-white';
@@ -31,7 +32,6 @@ const PIN_OFF = 'bg-white text-sky-700 border-2 border-sky-400';
 const CHIP = 'pointer-events-auto max-w-full flex items-center gap-2 h-9 pl-3 pr-1.5 rounded-2xl bg-white/95 backdrop-blur-md border shadow-sm text-left transition';
 const BADGE = 'shrink-0 px-2 py-0.5 rounded-lg border text-[11px] font-semibold';
 
-/** Top to bottom on the time dial. */
 const ERAS: ArEra[] = ['today', '1950', '1900'];
 
 const roomRunning = (s: Readonly<AppState>): boolean => s.roomAr !== 'off' && s.roomAr !== 'unsupported';
@@ -52,7 +52,8 @@ const modelShown = (s: Readonly<AppState>): boolean => onPicture(s) || onBuildin
 /** Nothing found yet: only the aiming frame shows. */
 const scanning = (s: Readonly<AppState>): boolean => !modelShown(s) && !roomRunning(s);
 
-const exhibitNum = (s: Readonly<AppState>): string => `#${String(currentExhibit(s).num).padStart(2, '0')}`;
+/** The exhibit's number as written in the data ('#01'). */
+const exhibitNum = (s: Readonly<AppState>): string => currentExhibit(s).num;
 
 function pins(s: Readonly<AppState>): Hotspot[] {
     return hotspotsFor(currentExhibit(s), s.lang, s.memories, memoryPinLabels);
@@ -81,13 +82,23 @@ function positionPins(): void {
         });
 }
 
-function dialHtml(s: Readonly<AppState>): string {
-    const stops = ERAS.map((era) => {
-        const on = era === s.arEra;
-        const label = era === 'today' ? t('eraToday') : era;
-        return `<button onclick="app.era('${era}')" class="w-12 h-12 rounded-full text-[11px] font-semibold transition ${on ? 'bg-sky-500 text-white shadow-lg' : 'text-white/75 hover:text-white'}">${label}</button>`;
-    }).join('');
-    return `<div class="glass rounded-full p-1.5 flex flex-col items-center gap-1">${stops}<span class="pb-1.5 pt-0.5 text-[9px] font-semibold tracking-[0.14em] text-sky-200">${t('arTime')}</span></div>`;
+const eraLabel = (era: ArEra): string => (era === 'today' ? t('eraToday') : era);
+
+/** One round chip showing the time; a tap moves to the next. The dots show where you are. */
+function timeChipHtml(s: Readonly<AppState>): string {
+    const next = ERAS[(ERAS.indexOf(s.arEra) + 1) % ERAS.length];
+    const dots = ERAS.map((era) => `<span class="w-[5px] h-[5px] rounded-full ${era === s.arEra ? 'bg-sky-400' : 'bg-white/35'}"></span>`).join('');
+    return `<div class="flex flex-col items-center gap-1.5"><span class="${CONTROL_LABEL}">${t('arTime')}</span>
+        <button onclick="app.era('${next}')" aria-label="${t('arTime')}: ${eraLabel(s.arEra)}" class="glass w-16 h-16 rounded-full flex flex-col items-center justify-center gap-1 active:scale-95 transition">
+            <span class="text-sm font-bold">${eraLabel(s.arEra)}</span><span class="flex gap-1">${dots}</span>
+        </button></div>`;
+}
+
+function bigButtonHtml(onclick: string, glyph: IconName, label: string, opts: { busy?: boolean; call?: boolean; off?: boolean } = {}): string {
+    const { busy = false, call = false, off = false } = opts;
+    return `<button onclick="${onclick}" aria-label="${label}" ${busy || off ? 'disabled' : ''} class="w-[76px] h-[76px] rounded-full border-4 border-white/90 flex items-center justify-center shadow-xl active:scale-95 transition ${busy || off ? 'opacity-60' : ''} ${call ? 'shutter-call' : ''}">
+        <span class="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center ${busy ? 'animate-pulse' : ''}">${icon(glyph, 'w-7 h-7')}</span>
+    </button>`;
 }
 
 /** What the big button does now (icon, label, busy), or null for no button. */
@@ -104,9 +115,14 @@ function shutterHtml(s: Readonly<AppState>): string {
     const shutter = shutterFor(s);
     if (!shutter) return '';
     const { glyph, label, busy, call } = shutter;
-    return `<button onclick="app.shutter()" aria-label="${label}" ${busy ? 'disabled' : ''} class="w-[76px] h-[76px] rounded-full border-4 border-white/90 flex items-center justify-center shadow-xl active:scale-95 transition ${busy ? 'opacity-60' : ''} ${call ? 'shutter-call' : ''}">
-        <span class="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center ${busy ? 'animate-pulse' : ''}">${icon(glyph, 'w-7 h-7')}</span>
-    </button>`;
+    return bigButtonHtml('app.shutter()', glyph, label, { busy, call });
+}
+
+/** Room AR's big button: stand the model on the ring (dimmed until the floor is found). */
+function roomButtonHtml(s: Readonly<AppState>): string {
+    if (s.roomAr !== 'searching' && s.roomAr !== 'aiming' && s.roomAr !== 'placed') return '';
+    const label = t(s.roomAr === 'placed' ? 'roomMoveHere' : 'roomPlaceHere');
+    return bigButtonHtml('app.placeHere()', 'locate', label, { call: s.roomAr === 'aiming', off: s.roomAr === 'searching' });
 }
 
 function hintFor(s: Readonly<AppState>): string {
@@ -239,7 +255,7 @@ function storyHtml(s: Readonly<AppState>): string {
 function mountRoomOverlay(): void {
     const hints = { searching: 'roomSearching', aiming: 'roomAiming', placed: 'roomPlaced', starting: 'roomStarting' } as const;
     view(
-        (s, u) => [s.lang, s.roomAr, s.roomSize, s.exhibitId, s.arEra, s.hotspotIndex, s.memories, u.story],
+        (s, u) => [s.lang, s.roomAr, s.exhibitId, s.arEra, s.hotspotIndex, s.memories, u.story],
         (s, u) => {
             setHidden('xrOverlay', !roomRunning(s));
             if (s.roomAr === 'off' || s.roomAr === 'unsupported') return;
@@ -251,29 +267,66 @@ function mountRoomOverlay(): void {
             $('xrExit')?.setAttribute('aria-label', t('roomExit'));
             setText('xrHint', t(hints[s.roomAr]));
             setHidden('xrCoach', s.roomAr !== 'searching');
+            setHtml('xrMain', roomButtonHtml(s));
             setHidden('xrDial', !placed);
-            if (placed) setHtml('xrDial', dialHtml(s));
-            setHidden('xrTools', !placed);
+            if (placed) setHtml('xrDial', timeChipHtml(s));
             setHidden('xrControls', story);
             setHidden('xrStory', !story);
             if (story) setHtml('xrStory', storyHtml(s));
-            const metres = roomModelWidth(ROOM_SCALES[s.roomSize] ?? 1);
-            setHtml('xrSizeBtn', `${icon('resize', 'w-4 h-4')}${t('roomSize', { m: metres < 1 ? metres.toFixed(1) : Math.round(metres) })}`);
-            setHtml('xrRotL', icon('rotateLeft', 'w-[18px] h-[18px]'));
-            setHtml('xrRotR', icon('rotateRight', 'w-[18px] h-[18px]'));
-            $('xrRotL')?.setAttribute('aria-label', t('roomRotate'));
-            $('xrRotR')?.setAttribute('aria-label', t('roomRotate'));
         },
     );
-    // A tap on a button or the story card must not also move the model in the room.
+
+    // Size and rotate: the two small buttons, and the open tool's ruler above
+    // the big button. Redrawn only when what they show changes: a ruler being
+    // dragged must not be swapped for a new one under the finger. The panel
+    // slides in when a tool opens, not when the turntable's play button changes.
+    let shownTool: RoomTool | null = null;
+    let drawnTools = '';
+    let drawnPanel = '';
+    view(
+        (s, u) => [s.lang, s.roomAr, s.roomSpin, u.roomTool],
+        (s, u) => {
+            const placed = s.roomAr === 'placed';
+            const tool = placed ? u.roomTool : null;
+            const toolsHtml = placed ? roomToolsHtml(u) : '';
+            const panelHtml = tool ? roomPanelHtml(s, u) : '';
+            setHidden('xrTools', !placed);
+            if (toolsHtml !== drawnTools) setHtml('xrTools', (drawnTools = toolsHtml));
+            setHidden('xrPanel', !tool);
+            if (panelHtml !== drawnPanel) setHtml('xrPanel', (drawnPanel = panelHtml));
+            const panel = $('xrPanel');
+            if (panel && tool && tool !== shownTool) {
+                panel.classList.remove('panel-rise');
+                void panel.offsetWidth; // restart the animation
+                panel.classList.add('panel-rise');
+            }
+            shownTool = tool;
+            refreshRoomTools(true);
+        },
+    );
+    view(
+        (s) => [inRoom(s)],
+        (s) => {
+            if (!inRoom(s)) setUi({ roomTool: null });
+        },
+    );
+    bindRulers($('xrPanel'));
+
+    // A tap on a button, a ruler or the story card must not also move the model in the room.
     $('xrOverlay')?.addEventListener('beforexrselect', (e) => {
-        if ((e.target as Element | null)?.closest('button, #xrStory')) e.preventDefault();
+        if ((e.target as Element | null)?.closest('button, #xrPanel, #xrStory')) e.preventDefault();
     });
+}
+
+/** After every 3D frame: pins follow the model, and room AR's ruler follows the turntable. */
+function afterFrame(): void {
+    positionPins();
+    refreshRoomTools();
 }
 
 export function mountAr(): void {
     const stage = $('arThree');
-    const has3d = stage ? initEngine(stage, positionPins) : false;
+    const has3d = stage ? initEngine(stage, afterFrame) : false;
 
     // The scanner (and with it the camera) runs while Live AR is open, except
     // while room AR uses the camera; it resumes when room AR ends. Only these
@@ -335,7 +388,7 @@ export function mountAr(): void {
         (s) => [s.lang, s.arEra, modelShown(s)],
         (s) => {
             setHidden('arDial', !modelShown(s));
-            setHtml('arDial', dialHtml(s));
+            setHtml('arDial', timeChipHtml(s));
         },
     );
 

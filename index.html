@@ -221,13 +221,14 @@
                     <div id="arLockRow" class="hidden flex"><button id="arLock" onclick="app.scan()"></button></div>
                 </div>
 
-                <!-- time dial -->
-                <div id="arDial" class="absolute right-3 top-[28%]"></div>
-
-                <!-- bottom: hint and the big button; or the story card -->
+                <!-- bottom: hint, then the big button with the time chip to its right; or the story card -->
                 <div class="absolute inset-x-0 bottom-0 px-3 flex flex-col items-center gap-3" style="padding-bottom: max(20px, env(safe-area-inset-bottom))">
-                    <div id="arControls" class="w-full flex flex-col items-center gap-3">
-                        <span id="arHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>                        <div id="arShutter"></div>
+                    <div id="arControls" class="w-full flex flex-col items-center gap-2">
+                        <span id="arHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
+                        <div class="relative w-full h-24 flex items-center justify-center">
+                            <div id="arShutter"></div>
+                            <div id="arDial" class="absolute top-1/2 -translate-y-1/2 left-[calc(50%+52px)]"></div>
+                        </div>
                     </div>
                     <div id="arStory" class="hidden w-full glass-light text-marble-ink rounded-3xl shadow-2xl p-4 space-y-2 max-h-[42vh] overflow-y-auto mobile-scroll"></div>
                 </div>
@@ -278,24 +279,27 @@
     <!-- Room AR (WebXR): shown over the camera view while the session runs -->
     <div id="xrOverlay" class="hidden fixed inset-0 z-[100] pointer-events-none text-white font-sans">
         <div id="xrPins" class="absolute inset-0"></div>
-        <div class="absolute inset-x-0 top-0 p-3 flex items-center gap-2" style="padding-top: max(12px, env(safe-area-inset-top))">
-            <button onclick="app.exitRoom()" id="xrExit" class="glass pointer-events-auto shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
-            <div class="glass flex-1 min-w-0 h-11 px-4 rounded-full flex items-center gap-2">
-                <span id="xrNum" class="shrink-0 text-[11px] font-semibold text-sky-300"></span>
-                <span id="xrTitle" class="min-w-0 truncate text-[13px] font-semibold"></span>
+        <div class="absolute inset-x-0 top-0 p-3 flex flex-col gap-2" style="padding-top: max(12px, env(safe-area-inset-top))">
+            <div class="flex items-center gap-2">
+                <button onclick="app.exitRoom()" id="xrExit" class="glass pointer-events-auto shrink-0 w-11 h-11 rounded-full flex items-center justify-center"></button>
+                <div class="glass flex-1 min-w-0 h-11 px-4 rounded-full flex items-center gap-2">
+                    <span id="xrNum" class="shrink-0 text-[11px] font-semibold text-sky-300"></span>
+                    <span id="xrTitle" class="min-w-0 truncate text-[13px] font-semibold"></span>
+                </div>
             </div>
+            <span id="xrHint" class="glass self-center max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
         </div>
         <div id="xrCoach" class="hidden absolute inset-x-0 top-[34%] flex justify-center">
             <div class="coach-phone w-14 h-24 rounded-2xl border-4 border-white/90 bg-white/10 shadow-xl"></div>
         </div>
-        <div id="xrDial" class="hidden pointer-events-auto absolute right-3 top-[28%]"></div>
+        <!-- bottom: the open tool's ruler; rotate and size, the big button, the time chip -->
         <div class="absolute inset-x-0 bottom-0 px-3 flex flex-col items-center gap-3" style="padding-bottom: max(20px, env(safe-area-inset-bottom))">
-            <div id="xrControls" class="w-full flex flex-col items-center gap-3">
-                <span id="xrHint" class="glass max-w-full px-4 py-2 rounded-full text-[13px] font-semibold text-center"></span>
-                <div id="xrTools" class="hidden pointer-events-auto flex items-center gap-3">
-                    <button id="xrSizeBtn" onclick="app.roomSize()" class="glass h-11 px-4 rounded-full text-[13px] font-semibold flex items-center gap-1.5"></button>
-                    <button id="xrRotL" onclick="app.roomRotate(-15)" class="glass w-11 h-11 rounded-full flex items-center justify-center"></button>
-                    <button id="xrRotR" onclick="app.roomRotate(15)" class="glass w-11 h-11 rounded-full flex items-center justify-center"></button>
+            <div id="xrControls" class="w-full flex flex-col items-center gap-2">
+                <div id="xrPanel" class="hidden pointer-events-auto max-w-full flex items-center gap-2"></div>
+                <div class="relative w-full h-24 flex items-center justify-center">
+                    <div id="xrTools" class="hidden pointer-events-auto absolute top-1/2 -translate-y-1/2 right-[calc(50%+52px)] flex items-end gap-2"></div>
+                    <div id="xrMain" class="pointer-events-auto"></div>
+                    <div id="xrDial" class="hidden pointer-events-auto absolute top-1/2 -translate-y-1/2 left-[calc(50%+52px)]"></div>
                 </div>
             </div>
             <div id="xrStory" class="hidden pointer-events-auto w-full glass-light text-marble-ink rounded-3xl shadow-2xl p-4 space-y-2 max-h-[40vh] overflow-y-auto mobile-scroll"></div>

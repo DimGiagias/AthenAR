@@ -117,9 +117,16 @@ let roomRoot: THREE.Group | null = null;
 /** Ring on the floor where a tap would put the model. */
 let reticle: THREE.Mesh | null = null;
 let roomFrameHook: ((frame: XRFrame) => void) | null = null;
-/** Extra turn from the rotate buttons, on top of facing the visitor. */
+/** Extra turn from the rotate ruler or the turntable, on top of facing the visitor. Never wrapped. */
 let roomTurn = 0;
 let roomFacing = 0;
+/** Turntable speed: 30° a second. */
+const TURNTABLE_SPEED = Math.PI / 6;
+let roomSpin = false;
+/** While set, the model eases to this turn (reset: the front, the short way round). */
+let roomTurnGoal: number | null = null;
+/** When a finger last turned the model: the turntable waits while it is held. */
+let lastHandTurn = 0;
 
 export function initEngine(host: HTMLElement, frameCallback: () => void): boolean {
     container = host;
@@ -436,6 +443,7 @@ function animate(_time: number, frame?: XRFrame): void {
     if (renderer.xr.isPresenting) {
         // WebXR moves the camera with the phone; the model stays on the floor.
         animateSmoke();
+        stepRoomTurn(dt);
         if (frame) roomFrameHook?.(frame);
         renderer.render(scene, camera);
         onFrame?.();
@@ -572,8 +580,12 @@ export function setRoomMode(on: boolean, scale = 1): void {
         scene.add(roomRoot, reticle);
         standOnFloor();
         roomTurn = 0;
+        roomTurnGoal = null;
+        roomSpin = false;
         return;
     }
+    roomSpin = false;
+    roomTurnGoal = null;
     if (!roomRoot) return;
     roomRoot.children.forEach((child) => {
         if (child !== group) dispose(child as THREE.Mesh);
@@ -608,7 +620,7 @@ export function placeRoomModel(): boolean {
     const eye = new THREE.Vector3().setFromMatrixPosition(renderer.xr.getCamera(camera).matrixWorld);
     roomFacing = Math.atan2(eye.x - spot.x, eye.z - spot.z); // the model's front is +z
     roomRoot.position.copy(spot);
-    roomRoot.rotation.set(0, roomFacing + roomTurn, 0);
+    applyRoomTurn();
     roomRoot.visible = true;
     return true;
 }
@@ -617,9 +629,47 @@ export function setRoomScale(scale: number): void {
     roomRoot?.scale.setScalar(scale);
 }
 
-export function rotateRoomModel(radians: number): void {
-    roomTurn += radians;
+function applyRoomTurn(): void {
     roomRoot?.rotation.set(0, roomFacing + roomTurn, 0);
+}
+
+/** Turn the model to `radians` (from the rotate ruler). Any number of turns: it never wraps. */
+export function setRoomTurn(radians: number): void {
+    roomTurn = radians;
+    roomTurnGoal = null;
+    lastHandTurn = performance.now();
+    applyRoomTurn();
+}
+
+export function getRoomTurn(): number {
+    return roomTurn;
+}
+
+/** The turntable: the model keeps turning slowly on its own while on. */
+export function setRoomSpin(on: boolean): void {
+    roomSpin = on;
+    if (on) roomTurnGoal = null;
+}
+
+/** Ease the model back to its front, the short way round. */
+export function faceRoomFront(): void {
+    const turn = 2 * Math.PI;
+    roomTurnGoal = Math.round(roomTurn / turn) * turn;
+}
+
+/** Each WebXR frame: the easing back to the front, or the turntable. */
+function stepRoomTurn(dt: number): void {
+    if (roomTurnGoal !== null) {
+        roomTurn += (roomTurnGoal - roomTurn) * Math.min(1, dt * 8);
+        if (Math.abs(roomTurnGoal - roomTurn) < 1e-3) {
+            roomTurn = roomTurnGoal;
+            roomTurnGoal = null;
+        }
+        applyRoomTurn();
+    } else if (roomSpin && performance.now() - lastHandTurn > 200) {
+        roomTurn += TURNTABLE_SPEED * dt;
+        applyRoomTurn();
+    }
 }
 
 /** Width of the current model in metres at a room scale. */

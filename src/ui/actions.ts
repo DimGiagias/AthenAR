@@ -4,7 +4,7 @@ import { exhibitsData } from '../data/exhibits';
 import type { ArEra, EraRoom, Lang } from '../data/types';
 import { scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
 import { foundTarget, stopImageAr } from '../features/ar/imageAr';
-import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar/room';
+import { exitRoom, placeHere, placeInRoom, resetRoomSize, resetRoomTurn, toggleRoomSpin } from '../features/ar/room';
 import { isOnSite } from '../features/ar/verification';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
 import { currentAssessment, getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
@@ -15,7 +15,7 @@ import { showToast } from '../features/toast';
 import { getState, setState } from '../state/store';
 import { t } from './i18n';
 import { focusStreetMapOn, resetStreetMapNorth, zoomStreetMap } from './map/streetMap';
-import { getUi, setUi } from './state';
+import { getUi, setUi, type RoomTool } from './state';
 
 const field = (id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null =>
     document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
@@ -148,8 +148,14 @@ export const app = {
     },
     placeInRoom,
     exitRoom,
-    roomSize: cycleRoomSize,
-    roomRotate: rotateRoom,
+    placeHere,
+    /** Open a room AR tool's ruler, or close it when it is already open. */
+    roomTool(tool: RoomTool): void {
+        setUi({ roomTool: getUi().roomTool === tool ? null : tool });
+    },
+    roomSizeReset: resetRoomSize,
+    roomTurnReset: resetRoomTurn,
+    roomSpin: toggleRoomSpin,
 
     // --- memories ---
     openMemory(): void {

@@ -3,6 +3,8 @@
 import { getState, watch, type AppState } from '../state/store';
 
 export type Screen = 'explore' | 'exhibit' | 'ar' | 'passport';
+/** Room AR's two small tools, each opening a ruler above the big button. */
+export type RoomTool = 'size' | 'turn';
 
 export interface UiState {
     welcome: boolean;
@@ -14,6 +16,8 @@ export interface UiState {
     exhibitTab: 'stories' | 'memories';
     /** Live AR: the story card of the selected pin is open. */
     story: boolean;
+    /** Room AR: which tool's ruler is open, if any. */
+    roomTool: RoomTool | null;
     memorySheet: boolean;
     memoryExhibitId: number;
 }
@@ -25,6 +29,7 @@ let ui: UiState = {
     arBack: 'explore',
     exhibitTab: 'stories',
     story: false,
+    roomTool: null,
     memorySheet: false,
     memoryExhibitId: 0,
 };

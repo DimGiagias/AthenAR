@@ -5,10 +5,10 @@
 import type { XR } from 'three/src/renderers/webxr/WebXR';
 import { isNativeApp } from '../../platform/native';
 import { getState, setState } from '../../state/store';
-import { rotateRoomModel, setRoomScale } from './three/engine';
+import { START_SCALE } from './roomControls';
+import { faceRoomFront, getRoomTurn, placeRoomModel, setRoomScale, setRoomSpin, setRoomTurn } from './three/engine';
 
-/** Metres per model unit: about 0.6 m (tabletop), 2 m and 6 m wide. */
-export const ROOM_SCALES = [0.1, 0.35, 1] as const;
+const DEG = Math.PI / 180;
 
 export function webXr(): XR | undefined {
     return (navigator as Navigator & { xr?: XR }).xr;
@@ -35,12 +35,38 @@ export function exitRoom(): void {
     void import('./roomSession').then((m) => m.endRoomAr());
 }
 
-export function cycleRoomSize(): void {
-    const next = (getState().roomSize + 1) % ROOM_SCALES.length;
-    setState({ roomSize: next });
-    setRoomScale(ROOM_SCALES[next]);
+/** The big button in room AR: stand the model where the ring on the floor is. */
+export function placeHere(): void {
+    if (placeRoomModel()) setState({ roomAr: 'placed' });
 }
 
-export function rotateRoom(degrees: number): void {
-    rotateRoomModel((degrees * Math.PI) / 180);
+/** `scale` is metres per model unit (see SIZE_STOPS). */
+export function setRoomSize(scale: number): void {
+    setState({ roomScale: scale });
+    setRoomScale(scale);
+}
+
+export function resetRoomSize(): void {
+    setRoomSize(START_SCALE);
+}
+
+/** Turn the model to `degrees` from facing the visitor; any number of turns. */
+export function turnRoom(degrees: number): void {
+    setRoomTurn(degrees * DEG);
+}
+
+export function roomTurnDegrees(): number {
+    return getRoomTurn() / DEG;
+}
+
+export function toggleRoomSpin(): void {
+    const on = !getState().roomSpin;
+    setState({ roomSpin: on });
+    setRoomSpin(on);
+}
+
+export function resetRoomTurn(): void {
+    setState({ roomSpin: false });
+    setRoomSpin(false);
+    faceRoomFront();
 }

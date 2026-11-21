@@ -6,7 +6,7 @@ import { getState, setState, type RoomArStatus } from '../../state/store';
 import { t } from '../../ui/i18n';
 import { showToast } from '../toast';
 import { setArCamera } from './controls';
-import { ROOM_SCALES, webXr } from './room';
+import { webXr } from './room';
 import { getRenderer, placeRoomModel, setReticle, setRoomFrameHook, setRoomMode } from './three/engine';
 
 /** The page element WebXR shows over the camera view (buttons, pins, story). */
@@ -47,7 +47,7 @@ export async function startRoomAr(): Promise<void> {
     }
     session.addEventListener('select', onTap);
     session.addEventListener('end', cleanUp);
-    setRoomMode(true, ROOM_SCALES[getState().roomSize]);
+    setRoomMode(true, getState().roomScale);
     setRoomFrameHook(onFrame);
     setStatus('searching');
 }
@@ -74,6 +74,7 @@ function cleanUp(): void {
     hitSource = null;
     session = null;
     setRoomMode(false);
+    setState({ roomSpin: false });
     const renderer = getRenderer();
     if (renderer) renderer.xr.enabled = false;
     setStatus('off');
