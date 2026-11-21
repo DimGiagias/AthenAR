@@ -6,7 +6,7 @@ dist/
 .vite/
 coverage/
 
-# Local APK builds (npm run apk, node v1/build-apk.mjs, CI's athenar.apk)
+# Local APK builds (npm run apk, CI's athenar.apk)
 /*.apk
 
 # Local settings and secrets
@@ -26,15 +26,6 @@ android/build/
 android/.gradle/
 android/local.properties
 android/app/src/main/assets/public/
-
-# Local-only reference copies: the previous design (v1/, with its own
-# generated dist-v1/ and v1/android/) and the original design prototype
-v1/
-dist-v1/
-prototype/
-
-# Old build output and test APKs set aside during clean-up
-_archive/
 
 # Logs
 *.log
