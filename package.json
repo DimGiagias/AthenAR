@@ -17,7 +17,7 @@
     "@capacitor-community/text-to-speech": "8.0.2",
     "@capacitor/android": "8.6.2",
     "@capacitor/core": "8.6.2",
-    "maplibre-gl": "^6.18.0",
+    "maplibre-gl": "^6.19.0",
     "three": "0.128.0"
   },
   "devDependencies": {
@@ -27,14 +27,14 @@
     "@types/geojson": "^7946.0.16",
     "@types/three": "0.128.0",
     "@vitejs/plugin-basic-ssl": "2.3.0",
-    "autoprefixer": "10.6.2",
-    "pbf": "^5.1.2",
+    "autoprefixer": "10.7.0",
+    "pbf": "^5.2.0",
     "pmtiles": "^4.5.0",
     "postcss": "8.5.33",
     "tailwindcss": "3.4.19",
     "typescript": "7.0.2",
     "vite": "8.3.8",
     "vite-plugin-pwa": "2.0.0",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   }
 }
