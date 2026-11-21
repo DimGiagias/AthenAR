@@ -6,30 +6,39 @@ export function render2dArchitecturalSvg(container: HTMLElement, exhibit: Exhibi
     let buildingPaths = '';
 
     if (exhibit.id === 0) {
-        // #01 SERAFEIO COMPLEX (1904 Stone Pavilions -> 1933 Pool -> 2026 Modern Bioclimatic Complex)
-        const poolLayer = (era === '1950' || era === 'today') ? `
-            <rect x="128" y="148" width="104" height="22" rx="4" fill="#38BDF8" fill-opacity="0.45" stroke="#0284C7" stroke-width="1.8"/>
-            <line x1="145" y1="148" x2="145" y2="170" stroke="#0284C7" stroke-width="1" stroke-dasharray="2 2"/>
-            <line x1="180" y1="148" x2="180" y2="170" stroke="#0284C7" stroke-width="1" stroke-dasharray="2 2"/>
-            <line x1="215" y1="148" x2="215" y2="170" stroke="#0284C7" stroke-width="1" stroke-dasharray="2 2"/>
-        ` : '';
-        const modernWing = (era === 'today') ? `
-            <rect x="195" y="72" width="115" height="72" rx="3" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
-            <line x1="195" y1="84" x2="310" y2="84" stroke="#0284C7" stroke-width="2.5"/>
-            <rect x="206" y="92" width="24" height="38" fill="#BAE6FD" stroke="#0284C7" stroke-width="1.3"/>
-            <rect x="238" y="92" width="24" height="38" fill="#BAE6FD" stroke="#0284C7" stroke-width="1.3"/>
-            <rect x="270" y="92" width="28" height="38" fill="#BAE6FD" stroke="#0284C7" stroke-width="1.3"/>
-        ` : '';
-        buildingPaths = `
-            ${modernWing}
-            <!-- 1904 Stone Pavilion Left -->
-            <polygon points="48,96 98,68 148,96" fill="#93C5FD" stroke="#0369A1" stroke-width="2.2"/>
-            <rect x="54" y="96" width="88" height="68" fill="#FFFFFF" stroke="#0369A1" stroke-width="2.2"/>
-            <path d="M68,140 V114 A8,8 0 0,1 84,114 V140 Z" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.6"/>
-            <path d="M108,140 V114 A8,8 0 0,1 124,114 V140 Z" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.6"/>
-            <rect x="89" y="132" width="18" height="32" fill="#BAE6FD" stroke="#0369A1" stroke-width="1.8"/>
-            ${poolLayer}
-        `;
+        // #01 SERAFEIO: the 2017 complex from Pireos St (pool hall behind, single-storey wing, 4-storey offices);
+        // before it, open land with the complex outlined.
+        if (era === 'today') {
+            buildingPaths = `
+            <!-- Pool hall with its roof lantern -->
+            <rect x="60" y="112" width="190" height="58" fill="#F1F5F9" stroke="#0369A1" stroke-width="2"/>
+            <rect x="60" y="120" width="190" height="10" fill="#BAE6FD" stroke="#0284C7" stroke-width="1.2"/>
+            <rect x="100" y="102" width="110" height="10" fill="#7DD3FC" fill-opacity="0.7" stroke="#0284C7" stroke-width="1.6"/>
+            <!-- Single-storey wing on Pireos -->
+            <rect x="36" y="140" width="170" height="30" fill="#FFFFFF" stroke="#0369A1" stroke-width="2.2"/>
+            <rect x="40" y="150" width="162" height="20" fill="#BFDBFE" stroke="#0284C7" stroke-width="1.2"/>
+            <line x1="80" y1="150" x2="80" y2="170" stroke="#0369A1" stroke-width="1.2"/>
+            <line x1="121" y1="150" x2="121" y2="170" stroke="#0369A1" stroke-width="1.2"/>
+            <line x1="162" y1="150" x2="162" y2="170" stroke="#0369A1" stroke-width="1.2"/>
+            <!-- Four-storey offices -->
+            <rect x="206" y="70" width="108" height="100" fill="#FFFFFF" stroke="#0369A1" stroke-width="2.4"/>
+            ${[0, 1, 2].map((f) => [0, 1, 2].map((b) => `<rect x="${216 + b * 32}" y="${80 + f * 22}" width="24" height="13" fill="#BAE6FD" stroke="#0284C7" stroke-width="1.2"/><line x1="${213 + b * 32}" y1="${78 + f * 22}" x2="${243 + b * 32}" y2="${78 + f * 22}" stroke="#64748B" stroke-width="2.4"/>`).join('')).join('')}
+            <rect x="212" y="146" width="96" height="24" fill="#BFDBFE" stroke="#0284C7" stroke-width="1.4"/>
+            <text x="260" y="142" text-anchor="middle" fill="#0369A1" font-size="7" font-weight="800" letter-spacing="1">ΣΕΡΑΦΕΙΟ</text>
+            <!-- Cypresses -->
+            <path d="M24,170 L30,118 L36,170 Z" fill="#15803D" fill-opacity="0.75"/>
+            <path d="M326,170 L332,124 L338,170 Z" fill="#15803D" fill-opacity="0.75"/>
+            `;
+        } else {
+            buildingPaths = `
+            <rect x="60" y="112" width="190" height="58" fill="none" stroke="#0284C7" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <rect x="36" y="140" width="170" height="30" fill="none" stroke="#0284C7" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <rect x="206" y="70" width="108" height="100" fill="none" stroke="#0284C7" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <circle cx="90" cy="148" r="14" fill="#65A30D" fill-opacity="0.55"/><rect x="88" y="158" width="4" height="12" fill="#92400E"/>
+            <circle cx="180" cy="150" r="12" fill="#65A30D" fill-opacity="0.55"/><rect x="178" y="158" width="4" height="12" fill="#92400E"/>
+            <circle cx="290" cy="146" r="15" fill="#65A30D" fill-opacity="0.55"/><rect x="288" y="157" width="4" height="13" fill="#92400E"/>
+            `;
+        }
     } else if (exhibit.svgStyle === 'gazi') {
         // #02 OLD GASWORKS (Twin Red-Brick Chimneys, Gasholder Lattice Frame, Clerestory Furnace Hall)
         const smokeSvg = (era === '1900' || era === '1950')

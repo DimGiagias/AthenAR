@@ -13,9 +13,10 @@ import { getHeading, getPitch } from '../../../platform/compass';
 import { signedAngleDelta } from '../../../platform/geoMath';
 import { getDeviceAngles } from '../../../platform/motion';
 import { buildMonumentMesh } from './models';
+import { SERAFEIO_PINS } from './serafeio';
 
 /** Where hotspot pins sit on a model, in model space. Cycles when there are more pins. */
-const HOTSPOT_ANCHORS: Array<[number, number, number]> = [
+const DEFAULT_PINS: Array<[number, number, number]> = [
     [-2.1, 1.2, 1.6],
     [2.0, 2.1, 1.4],
     [0.0, 0.5, 2.3],
@@ -25,6 +26,10 @@ const HOTSPOT_ANCHORS: Array<[number, number, number]> = [
     [-2.4, 0.5, -0.6],
     [2.3, 1.4, -0.8],
 ];
+
+/** Models whose story pins sit on particular parts of them, by exhibit id. */
+const MODEL_PINS: Partial<Record<number, Array<[number, number, number]>>> = { 0: SERAFEIO_PINS };
+let pins = DEFAULT_PINS;
 
 const AUTO_SPIN_PER_FRAME = 0.0032;
 const DEFAULT_ROT_Y = 0.55;
@@ -390,6 +395,7 @@ export function setEngineActive(on: boolean): void {
 export function showModel(exhibit: Exhibit, era: string): void {
     if (!group) return;
     smoke = buildMonumentMesh(group, exhibit, era, false);
+    pins = MODEL_PINS[exhibit.id] ?? DEFAULT_PINS;
     measureModel();
     if (roomRoot) standOnFloor();
 }
@@ -498,7 +504,7 @@ export function projectHotspot(index: number): { x: number; y: number; visible: 
     if (!container || !camera || !group || !renderer) return null;
     const room = renderer.xr.isPresenting;
     const view = room ? ((renderer.xr.getCamera(camera) as THREE.ArrayCamera).cameras[0] ?? camera) : camera;
-    const [ax, ay, az] = HOTSPOT_ANCHORS[index % HOTSPOT_ANCHORS.length];
+    const [ax, ay, az] = pins[index % pins.length];
     const v = new THREE.Vector3(ax, ay, az);
     v.applyMatrix4(group.matrixWorld); // the model's rotation, and on a tracked image or the floor its pose
     v.applyMatrix4(viewInverse.copy(view.matrixWorld).invert()).applyMatrix4(view.projectionMatrix);

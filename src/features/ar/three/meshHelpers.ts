@@ -12,7 +12,7 @@ export function setXrayMode(enabled: boolean): void {
 export function addDetailedMesh(
     parent: THREE.Object3D,
     geometry: THREE.BufferGeometry,
-    material: THREE.Material,
+    material: THREE.Material | THREE.Material[],
     pos?: number[] | null,
     rot?: number[] | null,
     edgeColor = 0x0284c7,

@@ -46,33 +46,6 @@ export function createArchitecturalTexture(styleType: string, era: string): THRE
             ctx.moveTo(wx, wy + 110); ctx.lineTo(wx + 90, wy + 110);
             ctx.stroke();
         }
-    } else if (styleType === 'stone_serafeio') {
-        // 1904 Ashlar Stone Masonry & Tall Arched Windows with Neoclassical Trim
-        ctx.fillStyle = era === '1900' ? '#E7E5E4' : '#F1F5F9';
-        ctx.fillRect(0, 0, 512, 512);
-        ctx.strokeStyle = '#CBD5E1';
-        ctx.lineWidth = 2.5;
-        for (let y = 0; y < 512; y += 32) {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
-            const off = (y / 32) % 2 === 0 ? 0 : 32;
-            for (let x = off; x < 512; x += 64) {
-                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 32); ctx.stroke();
-            }
-        }
-        // Cornice band
-        ctx.fillStyle = '#0284C7';
-        ctx.fillRect(0, 28, 512, 14);
-        // 3 Arched Windows
-        for (let c = 0; c < 3; c++) {
-            const x = 58 + c * 150;
-            ctx.fillStyle = '#0284C7';
-            ctx.fillRect(x - 6, 120, 102, 230);
-            ctx.fillStyle = '#E0F2FE';
-            ctx.fillRect(x, 128, 90, 214);
-            ctx.strokeStyle = '#0369A1';
-            ctx.lineWidth = 5;
-            ctx.strokeRect(x, 128, 90, 214);
-        }
     } else if (styleType === 'cobalt_modernist') {
         // Spyros Papaloukas Deep Cobalt Blue + Bauhaus Ribbon Windows & Shutters
         ctx.fillStyle = era === '1900' ? '#1D4ED8' : '#0284C7';

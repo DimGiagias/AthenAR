@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { Exhibit } from '../../../data/types';
 import { createArchitecturalTexture } from './textures';
 import { addDetailedMesh, createPedimentPrismGeometry, createBarrelVaultGeometry, setXrayMode } from './meshHelpers';
+import { buildSerafeio, SERAFEIO_BASE } from './serafeio';
 
 export function buildMonumentMesh(group: THREE.Group, exhibit: Exhibit, era: string, xray: boolean): THREE.Object3D[] {
     while (group.children.length > 0) {
@@ -14,15 +15,18 @@ export function buildMonumentMesh(group: THREE.Group, exhibit: Exhibit, era: str
     setXrayMode(xray);
 
     // 1. ARCHITECTURAL PLAZA PLINTH & HOLOGRAPHIC COMPASS RING
+    // The Serafeio is a whole site, so it stands on a larger base.
+    const [baseW, baseD] = exhibit.id === 0 ? SERAFEIO_BASE : [7.6, 5.6];
     const plinthMat = new THREE.MeshStandardMaterial({
         color: 0xf1f5f9,
         roughness: 0.7,
         transparent: xray,
         opacity: xray ? 0.25 : 0.95
     });
-    addDetailedMesh(group, new THREE.BoxGeometry(7.6, 0.22, 5.6), plinthMat, [0, -0.11, 0], null, 0x94a3b8);
+    addDetailedMesh(group, new THREE.BoxGeometry(baseW, 0.22, baseD), plinthMat, [0, -0.11, 0], null, 0x94a3b8);
 
-    const ringGeo = new THREE.RingGeometry(4.3, 4.5, 48);
+    const ringR = (4.4 * baseW) / 7.6;
+    const ringGeo = new THREE.RingGeometry(ringR - 0.1, ringR + 0.1, 48);
     const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.55 });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     ringMesh.rotation.x = Math.PI / 2;
@@ -38,49 +42,7 @@ export function buildMonumentMesh(group: THREE.Group, exhibit: Exhibit, era: str
 
     // 2. BESPOKE DETAILED 3D ARCHITECTURE PER MONUMENT & HISTORICAL ERA
     if (exhibit.id === 0) {
-        // =============================================================
-        // #01 SERAFEIO COMPLEX (1904 Stone Pavilions -> 1933 Pool -> 2026 Modern Hub)
-        // =============================================================
-        const stoneTex = createArchitecturalTexture('stone_serafeio', era);
-        const stoneMat = makeMat({ map: stoneTex, roughness: 0.45 });
-        const roofTileMat = makeMat({ color: 0xc2410c, roughness: 0.5 });
-        const treeMat = makeMat({ color: 0x15803d, roughness: 0.6 });
-
-        // Twin 1904 Preserved Stone Pavilions (Left & Back-Left) with Real Gable Roofs
-        [-2.1, -0.2].forEach((px, idx) => {
-            const pz = idx === 0 ? 0.6 : -1.3;
-            addDetailedMesh(group, new THREE.BoxGeometry(1.9, 1.55, 1.45), stoneMat, [px, 0.78, pz], null, 0x475569);
-            addDetailedMesh(group, createPedimentPrismGeometry(2.05, 0.62, 1.55), roofTileMat, [px, 1.55, pz], null, 0x7c2d12);
-        });
-
-        // 1933 Municipal Swimming Pool (Appears in 1950 & Today)
-        if (era === '1950' || era === 'today') {
-            const poolRimMat = makeMat({ color: 0xe2e8f0, roughness: 0.3 });
-            const waterMat = makeMat({ color: 0x0ea5e9, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.85 });
-            addDetailedMesh(group, new THREE.BoxGeometry(2.5, 0.18, 1.55), poolRimMat, [0.4, 0.09, 1.25], null, 0x0284c7);
-            addDetailedMesh(group, new THREE.BoxGeometry(2.25, 0.2, 1.3), waterMat, [0.4, 0.11, 1.25], null, 0x38bdf8);
-        }
-
-        // 2026 Modern Bioclimatic Wing & Pireos Street Pergola Louvers (Appears in Today)
-        if (era === 'today') {
-            const modernMat = makeMat({ map: createArchitecturalTexture('cobalt_modernist', 'today'), roughness: 0.25 });
-            const pergolaMat = makeMat({ color: 0x0284c7, metalness: 0.4, roughness: 0.3 });
-            addDetailedMesh(group, new THREE.BoxGeometry(2.4, 2.35, 1.7), modernMat, [2.1, 1.18, -0.35], null, 0x0369a1);
-            const solarMat = makeMat({ color: 0x1e3a8a, metalness: 0.7, roughness: 0.15 });
-            [-0.6, 0.0, 0.6].forEach(sx => {
-                addDetailedMesh(group, new THREE.BoxGeometry(0.45, 0.06, 1.1), solarMat, [2.1 + sx, 2.42, -0.35], [-0.25, 0, 0], 0x38bdf8);
-            });
-            for (let lx = -2.8; lx <= 2.8; lx += 0.7) {
-                addDetailedMesh(group, new THREE.BoxGeometry(0.08, 0.9, 0.08), pergolaMat, [lx, 0.45, 2.35], null, 0x0284c7);
-            }
-            addDetailedMesh(group, new THREE.BoxGeometry(6.0, 0.1, 0.45), pergolaMat, [0, 0.95, 2.35], null, 0x38bdf8);
-        }
-
-        [[-3.1, -1.6], [-2.9, 1.7], [3.1, 1.8]].forEach(([tx, tz]) => {
-            addDetailedMesh(group, new THREE.CylinderGeometry(0.08, 0.1, 0.5, 8), roofTileMat, [tx, 0.25, tz], null, 0x78350f);
-            addDetailedMesh(group, new THREE.ConeGeometry(0.38, 1.15, 10), treeMat, [tx, 0.95, tz], null, 0x166534);
-        });
-
+        buildSerafeio(group, era, makeMat);
     } else if (exhibit.svgStyle === 'gazi') {
         // =============================================================
         // #02 OLD GASWORKS (GAZI - TECHNOPOLIS): Red-Brick Chimneys, Retort Halls, Steel Gasholder & 3D Smoke

@@ -82,15 +82,15 @@ function positionPins(): void {
         });
 }
 
-const eraLabel = (era: ArEra): string => (era === 'today' ? t('eraToday') : era);
+const eraLabel = (s: Readonly<AppState>, era: ArEra): string => currentExhibit(s).eraLabels?.[era] ?? (era === 'today' ? t('eraToday') : era);
 
 /** One round chip showing the time; a tap moves to the next. The dots show where you are. */
 function timeChipHtml(s: Readonly<AppState>): string {
     const next = ERAS[(ERAS.indexOf(s.arEra) + 1) % ERAS.length];
     const dots = ERAS.map((era) => `<span class="w-[5px] h-[5px] rounded-full ${era === s.arEra ? 'bg-sky-400' : 'bg-white/35'}"></span>`).join('');
     return `<div class="flex flex-col items-center gap-1.5"><span class="${CONTROL_LABEL}">${t('arTime')}</span>
-        <button onclick="app.era('${next}')" aria-label="${t('arTime')}: ${eraLabel(s.arEra)}" class="glass w-16 h-16 rounded-full flex flex-col items-center justify-center gap-1 active:scale-95 transition">
-            <span class="text-sm font-bold">${eraLabel(s.arEra)}</span><span class="flex gap-1">${dots}</span>
+        <button onclick="app.era('${next}')" aria-label="${t('arTime')}: ${eraLabel(s, s.arEra)}" class="glass w-16 h-16 rounded-full flex flex-col items-center justify-center gap-1 active:scale-95 transition">
+            <span class="text-sm font-bold">${eraLabel(s, s.arEra)}</span><span class="flex gap-1">${dots}</span>
         </button></div>`;
 }
 
@@ -385,7 +385,7 @@ export function mountAr(): void {
     );
 
     view(
-        (s) => [s.lang, s.arEra, modelShown(s)],
+        (s) => [s.lang, s.exhibitId, s.arEra, modelShown(s)],
         (s) => {
             setHidden('arDial', !modelShown(s));
             setHtml('arDial', timeChipHtml(s));

@@ -32,6 +32,11 @@ export interface Exhibit {
     /** Modern exhibit that also belongs to the Ancient room (City Hall / Acharnian Gate). */
     dualAncient?: boolean;
     year: string;
+    /**
+     * Years the era dial shows instead of 1900 / 1950, where the exhibit's
+     * history fits other years better (its 3D model follows the same slots).
+     */
+    eraLabels?: Partial<Record<ArEra, string>>;
     /** [latitude, longitude] */
     coords: [number, number];
     svgStyle: string;

@@ -5,7 +5,9 @@ export const exhibitsData: Exhibit[] = [
         id: 0,
         num: '#01',
         eraRoom: 'modern',
-        year: '1904 / 1933',
+        year: '2017',
+        // The open-air pool of the 1960s, rather than the empty plot of 1950.
+        eraLabels: { '1950': '1980' },
         coords: [37.97328, 23.7062],
         svgStyle: 'serafio',
         el: {
@@ -14,27 +16,27 @@ export const exhibitsData: Exhibit[] = [
             title: 'Σεράφειο Συγκρότημα',
             street: 'Πειραιώς 144 & Πέτρου Ράλλη',
             walk: 'Είσαι εδώ • Αφετηρία',
-            archTag: 'Λιθόκτιστο & Μοντέρνο Συγκρότημα',
-            shortDesc: 'Από το ιστορικό Δημοτικό Βρεφοκομείο του 1904 και το κολυμβητήριο του 1933 στον σημερινό κόμβο καινοτομίας του Δήμου Αθηναίων.',
-            audioScript: 'Έκθεμα Πρώτο, Αίθουσα Νεότερης Ιστορίας: Σεράφειο Συγκρότημα στην οδό Πειραιώς. Εδώ θεμελιώθηκε το 1904 το Δημοτικό Βρεφοκομείο Αθηνών, ενώ το 1933 μετατράπηκε σε πρότυπο αθλητικό και κοινωνικό κέντρο.',
+            archTag: 'Κέντρο Αθλητισμού, Πολιτισμού & Καινοτομίας',
+            shortDesc: 'Από τη δωρεά του Αλκιβιάδη Σεράφη για δημόσια λουτρά και το κολυμβητήριο της δεκαετίας του 1960 στο σημερινό κέντρο αθλητισμού, πολιτισμού και καινοτομίας του Δήμου Αθηναίων (2017).',
+            audioScript: 'Έκθεμα Πρώτο, Αίθουσα Νεότερης Ιστορίας: το Σεράφειο, στην οδό Πειραιώς. Πήρε το όνομά του από τον Αλκιβιάδη Σεράφη, που άφησε στον Δήμο Αθηναίων χρήματα για δημόσια λουτρά. Τη δεκαετία του 1960 χτίστηκε εδώ κολυμβητήριο, και το 2017 άνοιξε το σημερινό κέντρο αθλητισμού, πολιτισμού και καινοτομίας.',
             hotspots: [
                 {
                     x: '26%', y: '44%',
-                    type: 'ΑΡΧΙΤΕΚΤΟΝΙΚΗ ΛΕΠΤΟΜΕΡΕΙΑ',
-                    title: 'Τα Πέτρινα Περίπτερα του 1904',
-                    text: 'Τα αυθεντικά λιθόκτιστα κτίρια διασώζουν την τυπολογία της αθηναϊκής φιλανθρωπικής αρχιτεκτονικής των αρχών του 20ού αιώνα.'
+                    type: 'ΤΟ ΟΝΟΜΑ',
+                    title: 'Η δωρεά του Αλκιβιάδη Σεράφη',
+                    text: 'Στα τέλη της δεκαετίας του 1930 ο Αλκιβιάδης Σεράφης άφησε με τη διαθήκη του χρήματα στον Δήμο Αθηναίων για δημόσια λουτρά σε δημοτικό οικόπεδο, δωρεάν για τους κατοίκους. Ήρθαν ο πόλεμος και ο εμφύλιος, και τα λουτρά δεν χτίστηκαν.'
                 },
                 {
                     x: '68%', y: '35%',
                     type: 'ΙΣΤΟΡΙΚΟ ΟΡΟΣΗΜΟ',
-                    title: 'Η Σχολή Κολύμβησης του 1933',
-                    text: 'Στον Μεσοπόλεμο δημιουργήθηκε εδώ η πρώτη οργανωμένη δημοτική πισίνα της Αθήνας για την άθληση της νεολαίας.'
+                    title: 'Το Σεράφειο Κολυμβητήριο',
+                    text: 'Τη δεκαετία του 1960, αντί για λουτρά, χτίστηκε εδώ κολυμβητήριο με το όνομα του δωρητή. Έκλεισε μετά τον σεισμό του 1999. Το νέο κλειστό κολυμβητήριο, με 370 θέσεις, άνοιξε τον Σεπτέμβριο του 2017.'
                 },
                 {
                     x: '50%', y: '68%',
-                    type: 'ΜΑΡΤΥΡΙΑ ΓΕΙΤΟΝΙΑΣ',
-                    title: 'Ανάμνηση Κατοίκου Ρουφ (1962)',
-                    text: '«Κάθε Κυριακή περνούσαμε έξω από τον ψηλό μαντρότοιχο της Πειραιώς και ακούγαμε τις φωνές των παιδιών κάτω από τα πεύκα...» — Κώστας Μ.'
+                    type: 'ΣΗΜΕΡΑ',
+                    title: 'Κέντρο Πολιτισμού & Καινοτομίας',
+                    text: 'Το τετραώροφο κτίριο στην Πέτρου Ράλλη φιλοξενεί δράσεις πολιτισμού, ανοιχτά εργαστήρια και πρωτοβουλίες τεχνολογικής και κοινωνικής καινοτομίας του Δήμου. Γύρω του: γήπεδα μπάσκετ, πάρκο και παιδική χαρά.'
                 }
             ]
         },
@@ -44,27 +46,27 @@ export const exhibitsData: Exhibit[] = [
             title: 'Serafeio Complex',
             street: '144 Pireos St. & Petrou Ralli',
             walk: 'You are here • Starting Point',
-            archTag: 'Stone Heritage & Innovation Hub',
-            shortDesc: 'From the 1904 Municipal Foundling Home and 1933 public swimming pool to today’s flagship center for innovation in Athens.',
-            audioScript: 'Exhibit One, Modern Athens Room: The Serafeio Complex on Pireos Street. Founded in 1904 as the Municipal Foundling Home of Athens, it later became a pioneering interwar sports hub in 1933.',
+            archTag: 'Sport, Culture & Innovation Centre',
+            shortDesc: 'From Alkiviadis Serafis’ bequest for public baths and the 1960s swimming pool to the City of Athens’ centre for sport, culture and innovation, opened in 2017.',
+            audioScript: 'Exhibit One, Modern Athens Room: the Serafeio on Pireos Street. It is named after Alkiviadis Serafis, who left the City of Athens money for public baths. A swimming pool was built here in the 1960s, and in 2017 today’s centre for sport, culture and innovation opened.',
             hotspots: [
                 {
                     x: '26%', y: '44%',
-                    type: 'ARCHITECTURAL DETAIL',
-                    title: 'The 1904 Stone Pavilions',
-                    text: 'The original stone-built pavilions preserve the austere elegance of early 20th-century Athenian civic philanthropy.'
+                    type: 'THE NAME',
+                    title: 'The Bequest of Alkiviadis Serafis',
+                    text: 'In the late 1930s Alkiviadis Serafis left the City of Athens money in his will for public baths on a municipal plot, free for local residents. War and civil war followed, and the baths were never built.'
                 },
                 {
                     x: '68%', y: '35%',
                     type: 'HISTORICAL MILESTONE',
-                    title: 'The 1933 Public Swimming Pool',
-                    text: 'During the interwar years, the Serafeio housed the first organized municipal swimming pool for the youth of Athens.'
+                    title: 'The Serafeio Swimming Pool',
+                    text: 'In the 1960s a swimming pool named after the donor was built here instead of the baths. It closed after the 1999 earthquake. The new indoor pool, with 370 seats, opened in September 2017.'
                 },
                 {
                     x: '50%', y: '68%',
-                    type: 'ORAL TESTIMONY',
-                    title: 'Memory from Rouf Neighborhood (1962)',
-                    text: '“Every Sunday we walked past the tall stone wall on Pireos Street and heard children laughing under the pine trees...” — Kostas M.'
+                    type: 'TODAY',
+                    title: 'A Centre for Culture & Innovation',
+                    text: 'The four-storey building on Petrou Ralli hosts the City’s cultural events, open workshops and technology and social innovation projects. Around it: basketball courts, a park and a playground.'
                 }
             ]
         }
