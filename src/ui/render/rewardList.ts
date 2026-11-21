@@ -3,6 +3,7 @@
 // stamps are left, earned ones let you choose the venue, claimed ones say where
 // and when.
 import { venueName } from '../../data/culture';
+import { CULTURE_SOURCE } from '../../data/cultureVenues';
 import { exhibitsData } from '../../data/exhibits';
 import { REWARDS, type Reward } from '../../data/rewards';
 import { stampCount } from '../../features/exhibits';
@@ -67,7 +68,7 @@ function listHtml(s: Readonly<AppState>): string {
             </span>
         </div>
         ${REWARDS.map((r, i) => rewardCard(r, i, s)).join('')}
-        <p class="px-4 text-center text-[11px] leading-4 text-slate-500">${t('rewardsSource')}</p>
+        <a href="${CULTURE_SOURCE.url}" target="_blank" rel="noopener" class="self-center px-4 inline-flex items-start justify-center gap-1 text-center text-[11px] leading-4 text-sky-700 underline decoration-sky-300 underline-offset-2">${t('rewardsSource')}${icon('externalLink', 'w-3 h-3 shrink-0 mt-px')}</a>
     </div>`;
 }
 

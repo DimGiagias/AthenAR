@@ -1,6 +1,7 @@
-// The City's culture venues (City of Athens open data, «Χώροι πολιτισμού
-// Δήμου Αθηναίων»), downloaded into cultureVenues.ts by scripts/fetch-map-data.mjs.
-// The dataset is in Greek; this adds the type labels and English names.
+// The City's culture venues («Χώροι πολιτισμού Δήμου Αθηναίων» on the City of
+// Athens open data portal), found through the portal's CKAN API and downloaded
+// into cultureVenues.ts by scripts/fetch-culture-venues.mjs. The dataset is in Greek;
+// this adds the type labels and English names.
 import type { Lang } from './types';
 
 export interface CultureVenue {
