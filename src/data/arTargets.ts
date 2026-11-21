@@ -34,8 +34,9 @@ export interface ImageTarget {
 
 export const AR_TARGETS_FILE = 'ar/targets.mind';
 
+// The A3 posters (print files in posters/). Their QR codes open ?ar=<exhibitId>.
 export const IMAGE_TARGETS: ImageTarget[] = [
-    // TEMPORARY: a test poster made from the app's own drawing, until the team
-    // picks the real image for the Serafeio demo.
-    { exhibitId: 0, kind: 'poster', image: 'ar/serafeio-test-poster.jpg', placement: 'upright', modelWidth: 0.9 },
+    { exhibitId: 0, kind: 'poster', image: 'ar/poster-serafeio.jpg', placement: 'upright', modelWidth: 0.9 },
+    { exhibitId: 1, kind: 'poster', image: 'ar/poster-gazi.jpg', placement: 'upright', modelWidth: 0.9 },
+    { exhibitId: 10, kind: 'poster', image: 'ar/poster-acropolis.jpg', placement: 'upright', modelWidth: 0.9 },
 ];
