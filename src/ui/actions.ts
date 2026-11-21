@@ -20,7 +20,7 @@ import { showToast } from '../features/toast';
 import { getState, setState } from '../state/store';
 import { t } from './i18n';
 import { focusStreetMapOn, resetStreetMapNorth, zoomStreetMap } from './map/streetMap';
-import { getUi, setUi, type RoomTool } from './state';
+import { getUi, setUi, type MapLayer, type RoomTool } from './state';
 
 const field = (id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null =>
     document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
@@ -68,7 +68,7 @@ export const app = {
         selectExhibit(id);
         const u = getUi();
         const back = u.screen === 'exhibit' || u.screen === 'ar' ? u.exhibitBack : u.screen;
-        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null, areaSheet: null, mapPlace: null });
+        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null, areaSheet: null, mapPlace: null, mapCard: null, mapLayersPanel: false });
         document.getElementById('xScroll')?.scrollTo(0, 0);
     },
     back(): void {
@@ -275,6 +275,23 @@ export const app = {
         setUi({ rewardTicket: null, rewardChoose: null, rewardList: false, screen: 'explore', mapPlace: { kind: 'venue', id } });
         // after the explore screen is shown, so the map has its size
         window.setTimeout(() => focusStreetMapOn(venue.lat, venue.lng), 80);
+    },
+
+    // --- map layers (City open data) ---
+    toggleLayersPanel(): void {
+        setUi({ mapLayersPanel: !getUi().mapLayersPanel, mapCard: null });
+    },
+    toggleLayer(layer: MapLayer): void {
+        const u = getUi();
+        const on = !u.mapLayers[layer];
+        setUi({ mapLayers: { ...u.mapLayers, [layer]: on }, mapCard: !on && u.mapCard?.layer === layer ? null : u.mapCard });
+    },
+    /** A tap on a metro station or culture venue on the map: its card. */
+    openMapCard(layer: MapLayer, id: number): void {
+        setUi({ mapCard: { layer, id }, mapLayersPanel: false });
+    },
+    closeMapCard(): void {
+        setUi({ mapCard: null });
     },
 
     // --- around the exhibit (City open data) ---

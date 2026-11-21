@@ -1,7 +1,7 @@
 // "Around the exhibit": the sheet of the exhibit page's ⓘ button, with the air
 // quality now (the City's air station nearest the exhibit) and the nearest
 // metro, both from the City of Athens open data. Each row opens its details.
-import { METRO_LINE, type ExhibitArea, type MetroStation } from '../../data/area';
+import { METRO_LINE, type ExhibitArea, type NearbyMetro } from '../../data/area';
 import { AREA_SOURCES, EXHIBIT_AREAS } from '../../data/areaData';
 import type { Lang } from '../../data/types';
 import { airNow, type AirNow } from '../../features/air';
@@ -10,7 +10,7 @@ import type { AppState } from '../../state/store';
 import { setHidden, setHtml } from '../dom';
 import { t, type StringKey } from '../i18n';
 import { icon } from '../icons';
-import { clock, dist, num } from '../shared';
+import { clock, dist, lineBadge, num, walkMinutes } from '../shared';
 import { view, type UiState } from '../state';
 
 /** The European Air Quality Index levels 1–6: name, badge, word and scale colours. */
@@ -22,16 +22,11 @@ const AQI: ReadonlyArray<{ name: StringKey; badge: string; word: string; bar: st
     { name: 'aqi5', badge: 'bg-rose-100 text-rose-900', word: 'text-rose-800', bar: 'bg-rose-800' },
     { name: 'aqi6', badge: 'bg-purple-100 text-purple-900', word: 'text-purple-800', bar: 'bg-purple-800' },
 ];
-const LINE_COLOUR: Record<number, string> = { 1: 'bg-green-600', 2: 'bg-red-600', 3: 'bg-blue-600' };
 
 const CHEVRON = icon('chevronRight', 'w-4 h-4 shrink-0 text-slate-400');
 const ROW = 'w-full text-left flex items-center gap-3 p-3';
 const SUB = 'block mt-0.5 text-[11.5px] leading-4 text-slate-500';
 
-/** Straight-line metres ×1.25 for the streets, at 80 m a minute. */
-const walkMinutes = (metres: number): number => Math.max(1, Math.round((metres * 1.25) / 80));
-const lineBadge = (n: number, small = false): string =>
-    `<span class="inline-flex items-center justify-center px-1 rounded-[5px] ${LINE_COLOUR[n] ?? 'bg-slate-500'} text-white font-extrabold align-[1px] ${small ? 'min-w-[15px] h-[15px] text-[9px] mr-[3px]' : 'min-w-[18px] h-[18px] text-[10.5px] mr-[5px]'}">${n}</span>`;
 const sourceLink = (url: string, text: string): string =>
     `<a href="${url}" target="_blank" rel="noopener" class="self-center text-center text-[10.5px] leading-4 text-slate-400 underline decoration-slate-300 underline-offset-2">${text}</a>`;
 
@@ -70,7 +65,7 @@ function airRow(area: ExhibitArea, now: AirNow | null, loading: boolean, lang: L
     </button>`;
 }
 
-function metroRow(metro: readonly MetroStation[], lang: Lang): string {
+function metroRow(metro: readonly NearbyMetro[], lang: Lang): string {
     const [first, second] = metro;
     if (!first) return '';
     const sub = second ? `${t('metroOr')} ${second.lines.map((n) => lineBadge(n, true)).join('')}${second.name[lang]} · ${dist(second.metres)}` : t('metroNearest');
@@ -145,7 +140,7 @@ function metroView(area: ExhibitArea, lang: Lang): string {
                 <span class="flex-1 min-w-0"><span class="block text-base font-semibold text-marble-ink">${m.name[lang]}</span><span class="${SUB}">${m.name[other]} · ${t('metroStation')}</span></span>
                 <span class="shrink-0 text-right text-[15px] font-bold text-sky-700">${t('walkMin', { n: walkMinutes(m.metres) })}<span class="block text-[11px] font-semibold text-slate-500">${dist(m.metres)}</span></span>
             </div>
-            <div class="flex flex-wrap gap-1.5">${m.lines.map((n) => `<span class="inline-flex items-center pl-1 pr-2.5 py-1 rounded-full bg-slate-50 text-xs font-semibold text-slate-700">${lineBadge(n)}${METRO_LINE[n]?.[lang] ?? ''}</span>`).join('')}</div>
+            <div class="flex flex-wrap gap-1.5">${m.lines.map((n) => `<span class="inline-flex items-center pl-1 pr-2.5 py-1 rounded-full bg-slate-50 text-xs font-semibold text-slate-700">${lineBadge(n)}${METRO_LINE[n]?.ends[lang] ?? ''}</span>`).join('')}</div>
             <button onclick="app.metroOnMap(${i})" class="h-10 rounded-xl border-[1.5px] border-sky-300 text-sky-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 active:bg-sky-50 transition">${icon('mapPin', 'w-4 h-4')}${t('metroOnMap')}</button>
         </div>`,
         )

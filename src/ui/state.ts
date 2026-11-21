@@ -7,6 +7,8 @@ export type Screen = 'explore' | 'exhibit' | 'ar' | 'passport';
 export type RoomTool = 'size' | 'turn';
 /** A place marked on the explore map: a reward's culture venue, or one of an exhibit's metro stations. */
 export type MapPlace = { kind: 'venue'; id: number } | { kind: 'metro'; exhibit: number; index: number };
+/** The explore map's optional layers (City open data): metro stations and culture venues. */
+export type MapLayer = 'metro' | 'venue';
 
 export interface UiState {
     welcome: boolean;
@@ -37,6 +39,11 @@ export interface UiState {
     rewardTicket: { reward: number; venue: number } | null;
     /** Explore map: a place marked on it, or null. */
     mapPlace: MapPlace | null;
+    /** Explore map: the layers shown, and whether their panel is open. */
+    mapLayers: Record<MapLayer, boolean>;
+    mapLayersPanel: boolean;
+    /** Explore map: the layer pin whose card is open (an index into METRO_STATIONS, or a culture venue id), or null. */
+    mapCard: { layer: MapLayer; id: number } | null;
 }
 
 let ui: UiState = {
@@ -57,6 +64,9 @@ let ui: UiState = {
     rewardFilter: 'all',
     rewardTicket: null,
     mapPlace: null,
+    mapLayers: { metro: false, venue: false },
+    mapLayersPanel: false,
+    mapCard: null,
 };
 
 type Select = (s: Readonly<AppState>, u: Readonly<UiState>) => readonly unknown[];

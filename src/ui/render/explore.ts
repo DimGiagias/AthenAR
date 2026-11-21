@@ -1,22 +1,29 @@
 // Explore: the street map fills the screen; a sheet over it holds the exhibit
 // count, the era filter, the featured (nearest or selected) exhibit and the
 // rest of the list. The sheet's top edge drags down to a strip (map nearly full
-// screen) and back up.
+// screen) and back up. A layers button over the map shows the City's metro
+// stations and culture venues (open data); a tap on one opens its card.
+import { METRO_LINE, metroFill, type MetroStation } from '../../data/area';
 import { exhibitsData } from '../../data/exhibits';
 import { geofenceRadius, MAP_PINS } from '../../data/geo';
 import type { EraRoom, Exhibit } from '../../data/types';
 import { matchesFilters } from '../../features/exhibits';
 import { venueById } from '../../features/rewards';
-import { EXHIBIT_AREAS } from '../../data/areaData';
-import { venueName } from '../../data/culture';
+import { EXHIBIT_AREAS, METRO_STATIONS } from '../../data/areaData';
+import { venueName, venueType } from '../../data/culture';
+import { CULTURE_VENUES } from '../../data/cultureVenues';
+import { REWARDS } from '../../data/rewards';
+import { distanceMeters } from '../../platform/geoMath';
 import type { AppState } from '../../state/store';
 import { app } from '../actions';
-import { $, setClass, setHtml, setText } from '../dom';
+import { $, setClass, setHidden, setHtml, setText } from '../dom';
+import { escapeHtml } from '../escapeHtml';
 import { t } from '../i18n';
-import { mountStreetMap, updateStreetMap, type MapView } from '../map/streetMap';
-import { icon } from '../icons';
-import { dist, metresTo, PRIMARY, ROOM_BADGE, roomLabel } from '../shared';
-import { view, type UiState } from '../state';
+import { mountStreetMap, updateStreetMap, type MapStopView, type MapView } from '../map/streetMap';
+import { icon, type IconName } from '../icons';
+import { dist, lineBadge, metresTo, PRIMARY, ROOM_BADGE, roomLabel } from '../shared';
+import { view, type MapLayer, type UiState } from '../state';
+import { venueLook } from './rewardChooser';
 
 // The era filter: a dropdown pill that takes on the chosen era's colour.
 const ERA_PILL = 'relative h-7 max-w-[132px] pl-2 pr-1.5 rounded-full border text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition';
@@ -41,6 +48,73 @@ function mapPlace(s: Readonly<AppState>, u: Readonly<UiState>): MapView['place']
     return null;
 }
 
+const VENUE_STYLE = 'background:#FFFFFF;color:#E11D48;box-shadow:inset 0 0 0 1.5px #E11D48';
+
+function mapStops(s: Readonly<AppState>, u: Readonly<UiState>): MapStopView[] {
+    const selected = (layer: MapLayer, id: number): boolean => u.mapCard?.layer === layer && u.mapCard.id === id;
+    const stops: MapStopView[] = [];
+    if (u.mapLayers.venue) {
+        for (const v of CULTURE_VENUES) {
+            stops.push({ layer: 'venue', id: v.id, lat: v.lat, lng: v.lng, label: venueName(v, s.lang), fill: '#FFFFFF', glyph: venueLook(v).glyph, selected: selected('venue', v.id) });
+        }
+    }
+    if (u.mapLayers.metro) {
+        METRO_STATIONS.forEach((m, i) => stops.push({ layer: 'metro', id: i, lat: m.lat, lng: m.lng, label: m.name[s.lang], fill: metroFill(m.lines), glyph: 'train', selected: selected('metro', i) }));
+    }
+    return stops;
+}
+
+function layersPanel(u: Readonly<UiState>): string {
+    const row = (layer: MapLayer, glyph: IconName, look: string, title: string, sub: string): string => {
+        const on = u.mapLayers[layer];
+        return `<button onclick="app.toggleLayer('${layer}')" role="switch" aria-checked="${on}" class="w-full text-left flex items-center gap-2.5 py-1.5">
+            <span class="shrink-0 w-8 h-8 rounded-[10px] flex items-center justify-center" style="${look}">${icon(glyph, 'w-4 h-4')}</span>
+            <span class="flex-1 min-w-0"><span class="block text-[13px] font-semibold text-marble-ink">${title}</span><span class="block text-[10.5px] text-slate-500">${sub}</span></span>
+            <span class="shrink-0 relative w-9 h-[21px] rounded-full transition ${on ? 'bg-sky-600' : 'bg-slate-300'}"><span class="absolute top-0.5 ${on ? 'left-[17px]' : 'left-0.5'} w-[17px] h-[17px] rounded-full bg-white shadow transition-all"></span></span>
+        </button>`;
+    };
+    return `<span class="text-[10px] font-bold tracking-[0.1em] uppercase text-sky-600">${t('layersTitle')}</span>
+        ${row('metro', 'train', 'background:#0284C7;color:#FFFFFF', t('layerMetro'), t('layerMetroCount', { n: METRO_STATIONS.length }))}
+        ${row('venue', 'landmark', VENUE_STYLE, t('layerVenues'), t('layerVenuesCount', { n: CULTURE_VENUES.length }))}
+        <span class="text-[9.5px] text-slate-400">${t('layersSource')}</span>`;
+}
+
+function nearestExhibit(m: MetroStation): { ex: Exhibit; metres: number } {
+    return exhibitsData.map((ex) => ({ ex, metres: distanceMeters(m.lat, m.lng, ex.coords[0], ex.coords[1]) })).reduce((a, b) => (b.metres < a.metres ? b : a));
+}
+
+function mapCard(s: Readonly<AppState>, u: Readonly<UiState>): string {
+    const card = u.mapCard;
+    if (!card) return '';
+    const close = `<button onclick="app.closeMapCard()" aria-label="${t('close')}" class="shrink-0 w-[30px] h-[30px] rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">${icon('x', 'w-3.5 h-3.5')}</button>`;
+    const head = (look: string, glyph: IconName, kicker: string, title: string, sub: string): string => `<div class="flex items-start gap-2.5">
+            <span class="shrink-0 w-[38px] h-[38px] rounded-xl flex items-center justify-center" style="${look}">${icon(glyph, 'w-5 h-5')}</span>
+            <span class="flex-1 min-w-0">
+                <span class="block text-[10px] font-bold tracking-[0.08em] uppercase text-slate-500">${kicker}</span>
+                <span class="block text-[15px] leading-5 font-semibold text-marble-ink">${title}</span>
+                <span class="block mt-0.5 text-[11.5px] leading-4 text-slate-500">${sub}</span>
+            </span>
+            ${close}
+        </div>`;
+    let inner = '';
+    if (card.layer === 'metro') {
+        const m = METRO_STATIONS[card.id];
+        if (!m) return '';
+        const near = nearestExhibit(m);
+        inner = `${head(`background:${metroFill(m.lines)};color:#FFFFFF`, 'train', t('metroStation'), m.name[s.lang], m.name[s.lang === 'el' ? 'en' : 'el'])}
+            <div class="flex flex-col gap-1">${m.lines.map((n) => `<span class="flex items-center text-xs text-slate-700">${lineBadge(n)}${METRO_LINE[n]?.ends[s.lang] ?? ''}</span>`).join('')}</div>
+            <button onclick="app.openExhibit(${near.ex.id})" class="flex items-center gap-1.5 text-left text-[11.5px] font-semibold text-sky-700">${icon('mapPin', 'w-3.5 h-3.5 shrink-0')}<span class="flex-1 min-w-0 truncate">${t('mapNearestExhibit', { name: near.ex[s.lang].title, dist: dist(near.metres) })}</span>${icon('chevronRight', 'w-3.5 h-3.5 shrink-0')}</button>`;
+    } else {
+        const v = venueById(card.id);
+        if (!v) return '';
+        const reward = REWARDS.find((r) => r.types.includes(v.type));
+        inner = `${head(VENUE_STYLE, venueLook(v).glyph, venueType(v, s.lang), escapeHtml(venueName(v, s.lang)), escapeHtml(v.address))}
+            ${reward ? `<button onclick="app.openRewards()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 text-[11.5px] font-semibold text-left">${icon('gift', 'w-3.5 h-3.5 shrink-0')}<span class="flex-1 min-w-0">${t('mapVenueReward', { mine: reward[s.lang].mine, n: reward.stamps })}</span>${icon('chevronRight', 'w-3.5 h-3.5 shrink-0')}</button>` : ''}
+            ${/^https?:\/\//.test(v.link) ? `<a href="${escapeHtml(v.link)}" target="_blank" rel="noopener" class="h-9 rounded-xl border-[1.5px] border-sky-300 text-sky-700 text-[12.5px] font-semibold flex items-center justify-center gap-1.5">${icon('externalLink', 'w-3.5 h-3.5')}${t('passWebsite')}</a>` : ''}`;
+    }
+    return `<div role="dialog" aria-label="${t('layersTitle')}" class="bg-white rounded-[20px] p-3 shadow-[0_16px_36px_rgba(15,23,42,0.22)] flex flex-col gap-2 fade-in">${inner}</div>`;
+}
+
 function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
     return {
         lang: s.lang,
@@ -52,6 +126,7 @@ function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
         }),
         user: s.gps === 'active' && s.coords ? { lat: s.coords[0], lng: s.coords[1], demo: s.demoMode, label: t(s.demoMode ? 'youLabelDemo' : 'youLabel') } : null,
         place: mapPlace(s, u),
+        stops: mapStops(s, u),
         roomLabels: { ancient: t('mapRoomAncient'), byzantine: t('mapRoomByzantine'), modern: t('mapRoomModern') },
         unavailableText: t('mapUnavailable'),
     };
@@ -210,11 +285,35 @@ export function mountExplore(): void {
         northBtn?.classList.toggle('flex', turned);
         if (needle) needle.style.transform = `rotate(${-bearing}deg)`;
     };
-    if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true, onBearing });
+    if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true, onBearing, onPickStop: (layer, id) => app.openMapCard(layer, id) });
 
     view(
-        (s, u) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode, u.mapPlace],
+        (s, u) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode, u.mapPlace, u.mapLayers, u.mapCard],
         (s, u) => updateStreetMap(mapView(s, u)),
+    );
+
+    // The layers button and its panel.
+    view(
+        (s, u) => [s.lang, u.mapLayers, u.mapLayersPanel],
+        (s, u) => {
+            const anyOn = u.mapLayers.metro || u.mapLayers.venue;
+            const dot = anyOn ? '<span class="absolute -top-1 -right-1 w-[11px] h-[11px] rounded-full bg-sky-600 border-2 border-white"></span>' : '';
+            setHtml('exLayersBtn', icon('layers', 'w-5 h-5') + dot);
+            $('exLayersBtn')?.setAttribute('aria-label', t('layersButton'));
+            $('exLayersBtn')?.setAttribute('aria-expanded', String(u.mapLayersPanel));
+            setHidden('exLayersPanel', !u.mapLayersPanel);
+            if (u.mapLayersPanel) setHtml('exLayersPanel', layersPanel(u));
+        },
+    );
+
+    // The card of a tapped station or venue.
+    view(
+        (s, u) => [s.lang, u.mapCard],
+        (s, u) => {
+            const card = mapCard(s, u);
+            setHidden('exMapCard', card === '');
+            setHtml('exMapCard', card);
+        },
     );
 
     // GPS pill: green when on, pulsing while locating, amber when blocked or in Demo Mode.

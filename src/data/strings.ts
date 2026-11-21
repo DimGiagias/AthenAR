@@ -255,6 +255,16 @@ export const uiStrings = {
         metroNote: 'Η απόσταση είναι σε ευθεία γραμμή· ο χρόνος με τα πόδια είναι κατά προσέγγιση.',
         metroSource: 'Σταθμοί Μετρό, Τραμ, ΟΣΕ · Ανοιχτά Δεδομένα Δήμου Αθηναίων',
         walkMin: '{n}′',
+        // map layers
+        layersButton: 'Στρώσεις χάρτη',
+        layersTitle: 'Στον χάρτη',
+        layerMetro: 'Σταθμοί μετρό',
+        layerMetroCount: '{n} σταθμοί',
+        layerVenues: 'Χώροι πολιτισμού',
+        layerVenuesCount: '{n} χώροι του Δήμου',
+        layersSource: 'Ανοιχτά Δεδομένα Δήμου Αθηναίων',
+        mapNearestExhibit: 'Κοντινότερο έκθεμα: {name} · {dist}',
+        mapVenueReward: 'Ανταμοιβή διαβατηρίου: {mine} με {n} σφραγίδες',
 
         // --- AR viewport ---
         toastImageArFound: '📌 Βρέθηκε η εικόνα: {title}',
@@ -530,6 +540,16 @@ export const uiStrings = {
         metroNote: 'Distances are in a straight line; walking times are approximate.',
         metroSource: 'Metro, tram and rail stations · City of Athens Open Data',
         walkMin: '{n} min',
+        // map layers
+        layersButton: 'Map layers',
+        layersTitle: 'On the map',
+        layerMetro: 'Metro stations',
+        layerMetroCount: '{n} stations',
+        layerVenues: 'Culture venues',
+        layerVenuesCount: '{n} City venues',
+        layersSource: 'City of Athens Open Data',
+        mapNearestExhibit: 'Nearest exhibit: {name} · {dist}',
+        mapVenueReward: 'Passport reward: {mine} for {n} stamps',
 
         // --- AR viewport ---
         toastImageArFound: '📌 Image found: {title}',

@@ -18,6 +18,8 @@ const LOOK: Record<string, { glyph: IconName; tint: string }> = {
     ΠΙΝΑΚΟΘΗΚΗ: { glyph: 'image', tint: 'bg-indigo-50 text-indigo-700' },
     ΘΕΑΤΡΟ: { glyph: 'music', tint: 'bg-rose-50 text-rose-700' },
     ΚΙΝΗΜΑΤΟΓΡΑΦΟΣ: { glyph: 'film', tint: 'bg-slate-100 text-slate-700' },
+    ΒΙΒΛΙΟΘΗΚΗ: { glyph: 'book', tint: 'bg-emerald-50 text-emerald-700' },
+    'ΠΟΛΙΤΙΣΤΙΚΟ ΚΕΝΤΡΟ': { glyph: 'users', tint: 'bg-sky-50 text-sky-700' },
 };
 export const venueLook = (v: CultureVenue): { glyph: IconName; tint: string } => LOOK[v.type] ?? { glyph: 'landmark', tint: 'bg-sky-50 text-sky-700' };
 

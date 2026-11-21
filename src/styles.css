@@ -84,6 +84,29 @@ h1, h2, h3, h4 {
     white-space: nowrap; padding: 2px 7px; border-radius: 6px; border: 1px solid #FECDD3;
     background: #FFFFFF; color: #0F172A; font-size: 10.5px; font-weight: 700; line-height: 1.35;
 }
+/* The optional layers: metro stations (line colours) and culture venues (rose),
+   each with its icon. A little bigger from the zoom set on .map-stops-near
+   (streetMap.ts), where stations also show their names. */
+.map-pin { z-index: 2; }
+.map-stop { width: 18px; height: 18px; cursor: pointer; z-index: 1; }
+.map-stop.is-selected { z-index: 3; }
+.map-stop__dot {
+    display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+    border-radius: 5px; border: 1.5px solid #FFFFFF; color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
+}
+.map-stop__dot svg { width: 10px; height: 10px; }
+.map-stop--venue .map-stop__dot { border-color: #E11D48; color: #E11D48; }
+.map-stop.is-selected .map-stop__dot { box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.35), 0 4px 10px rgba(15, 23, 42, 0.35); }
+.map-stops-near .map-stop { width: 22px; height: 22px; }
+.map-stops-near .map-stop__dot { border-width: 2px; border-radius: 6px; }
+.map-stops-near .map-stop__dot svg { width: 12px; height: 12px; }
+.map-stop__label {
+    display: none; position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%);
+    white-space: nowrap; color: #334155; font-size: 10px; font-weight: 700; line-height: 1.3;
+    text-shadow: 0 0 3px #FFFFFF, 0 0 3px #FFFFFF, 0 0 3px #FFFFFF; pointer-events: none;
+}
+.map-stops-near .map-stop--metro .map-stop__label, .map-stop.is-selected .map-stop__label { display: block; }
 .map-user { width: 14px; height: 14px; pointer-events: none; z-index: 4; }
 .map-user__dot { position: absolute; inset: 0; border-radius: 9999px; border: 2.5px solid #FFFFFF; background: #10B981; }
 .map-user__pulse { position: absolute; inset: -3px; border-radius: 9999px; background: #10B981; animation: mapUserPulse 1.8s ease-out infinite; }

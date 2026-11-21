@@ -1,6 +1,7 @@
 // The street map on the Explore screen: a real, offline map of Athens
 // (MapLibre drawing bundled OpenStreetMap tiles) with the exhibits, museum
-// rooms and the visitor on it.
+// rooms and the visitor on it, and optionally the City's metro stations and
+// culture venues.
 //
 // Like the 3D engine, this is a drawing module: it is given a container and a
 // plain description of what to show (`MapView`), and never reads the store.
@@ -13,7 +14,7 @@ import type { GeoJSONSource, LngLatBoundsLike, Map as MapLibreMap, Marker } from
 import { MAP_BBOX, ringCentre, roomOutline, type LngLat } from '../../data/mapAreas';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { EraRoom, Lang } from '../../data/types';
-import { icon } from '../icons';
+import { icon, type IconName } from '../icons';
 import { buildStyle, NAME_LAYERS, nameField, ROOM_COLOURS, roomOpacity } from './style';
 
 export interface MapPinView {
@@ -27,6 +28,21 @@ export interface MapPinView {
     dimmed: boolean;
 }
 
+/** A metro station or culture venue of the map's optional layers. */
+export interface MapStopView {
+    layer: 'metro' | 'venue';
+    id: number;
+    lat: number;
+    lng: number;
+    /** Shown beside the pin when zoomed in (always for metro, when selected for venues). */
+    label: string;
+    /** CSS background of the pin. */
+    fill: string;
+    /** Icon in the pin when zoomed in. */
+    glyph: IconName;
+    selected: boolean;
+}
+
 export interface MapView {
     lang: Lang;
     eraFilter: EraRoom | 'all';
@@ -35,6 +51,8 @@ export interface MapView {
     user: { lat: number; lng: number; demo: boolean; label: string } | null;
     /** A place to mark: a reward's culture venue or an exhibit's metro station, from their "On the map". */
     place: { kind: 'venue' | 'metro'; lat: number; lng: number; label: string } | null;
+    /** The optional layers' pins. */
+    stops: MapStopView[];
     roomLabels: Record<EraRoom, string>;
     /** shown instead of the map if the device cannot draw it */
     unavailableText: string;
@@ -42,6 +60,8 @@ export interface MapView {
 
 /** Pin name plates appear from this zoom up; below it they would overlap. */
 const LABEL_ZOOM = 12.8;
+/** Layer pins are small dots below this zoom, and get icons (and stations their names) from it up. */
+const STOPS_NEAR_ZOOM = 14.5;
 /** Room outlines are drawn this far (metres) around their exhibits. */
 const ROOM_MARGIN_M = 170;
 // Keeps pins clear of the edges and of the zoom buttons that float over the map.
@@ -56,6 +76,8 @@ let onPickPin: (id: number) => void = () => {};
 
 const pinMarkers = new Map<number, { marker: Marker; el: HTMLButtonElement; label: HTMLSpanElement }>();
 let userMarker: { marker: Marker; el: HTMLDivElement; label: HTMLSpanElement } | null = null;
+const stopMarkers = new Map<string, { marker: Marker; el: HTMLButtonElement; dot: HTMLSpanElement; label: HTMLSpanElement; glyph: IconName }>();
+let onPickStop: (layer: 'metro' | 'venue', id: number) => void = () => {};
 let placeMarker: { kind: 'venue' | 'metro'; marker: Marker; label: HTMLSpanElement } | null = null;
 
 let fittedFor = '';
@@ -93,12 +115,15 @@ export interface StreetMapOptions {
     keepTopOnResize?: boolean;
     /** Called whenever the map turns, with its bearing in degrees (0 = north up). */
     onBearing?: (bearing: number) => void;
+    /** Called when a layer pin (metro station or culture venue) is tapped. */
+    onPickStop?: (layer: 'metro' | 'venue', id: number) => void;
 }
 
 export async function mountStreetMap(container: HTMLElement, onPick: (id: number) => void, options: StreetMapOptions = {}): Promise<void> {
     if (host) return;
     host = container;
     onPickPin = onPick;
+    if (options.onPickStop) onPickStop = options.onPickStop;
     try {
         const ml = await import('maplibre-gl');
         ml.setWorkerUrl(workerUrl);
@@ -233,6 +258,7 @@ function apply(): void {
     map.setPaintProperty('rooms-fill', 'fill-opacity', roomOpacity(view.eraFilter));
     drawRooms();
     drawPins();
+    drawStops();
     drawUser();
     drawPlace();
     syncLabelVisibility();
@@ -324,8 +350,53 @@ function drawPlace(): void {
     if (placeMarker.label.textContent !== place.label) placeMarker.label.textContent = place.label;
 }
 
+function drawStops(): void {
+    if (!map || !view || !MarkerClass) return;
+    const shown = new Set<string>();
+    for (const stop of view.stops) {
+        const key = `${stop.layer}:${stop.id}`;
+        shown.add(key);
+        let entry = stopMarkers.get(key);
+        if (!entry) {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.className = `map-stop map-stop--${stop.layer}`;
+            const dot = document.createElement('span');
+            dot.className = 'map-stop__dot';
+            const label = document.createElement('span');
+            label.className = 'map-stop__label';
+            el.append(dot, label);
+            const { layer, id } = stop;
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onPickStop(layer, id);
+            });
+            entry = { el, dot, label, glyph: stop.glyph, marker: new MarkerClass({ element: el, anchor: 'center' }).setLngLat([stop.lng, stop.lat]).addTo(map) };
+            entry.dot.innerHTML = icon(stop.glyph, 'w-3 h-3', 2.4);
+            stopMarkers.set(key, entry);
+        }
+        if (entry.glyph !== stop.glyph) {
+            entry.dot.innerHTML = icon(stop.glyph, 'w-3 h-3', 2.4);
+            entry.glyph = stop.glyph;
+        }
+        entry.dot.style.background = stop.fill;
+        if (entry.label.textContent !== stop.label) {
+            entry.label.textContent = stop.label;
+            entry.el.setAttribute('aria-label', stop.label);
+        }
+        entry.el.classList.toggle('is-selected', stop.selected);
+    }
+    for (const [key, entry] of stopMarkers) {
+        if (shown.has(key)) continue;
+        entry.marker.remove();
+        stopMarkers.delete(key);
+    }
+}
+
 function syncLabelVisibility(): void {
-    if (map && host) host.classList.toggle('map-labels-on', map.getZoom() >= LABEL_ZOOM);
+    if (!map || !host) return;
+    host.classList.toggle('map-labels-on', map.getZoom() >= LABEL_ZOOM);
+    host.classList.toggle('map-stops-near', map.getZoom() >= STOPS_NEAR_ZOOM);
 }
 
 function fitToFocus(animate: boolean): void {

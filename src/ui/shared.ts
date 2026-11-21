@@ -1,4 +1,4 @@
-// Small helpers shared by the screens.
+import { METRO_LINE } from '../data/area';
 import type { EraRoom, Exhibit } from '../data/types';
 import { distanceMeters, formatDistance } from '../platform/geoMath';
 import type { AppState } from '../state/store';
@@ -39,6 +39,13 @@ export function clock(ms: number, lang: AppState['lang']): string {
 export function num(value: number | null, lang: AppState['lang']): string {
     return value === null ? '–' : value.toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 });
 }
+
+/** A metro line's number in its colour. */
+export const lineBadge = (n: number, small = false): string =>
+    `<span class="inline-flex items-center justify-center px-1 rounded-[5px] text-white font-extrabold align-[1px] ${small ? 'min-w-[15px] h-[15px] text-[9px] mr-[3px]' : 'min-w-[18px] h-[18px] text-[10.5px] mr-[5px]'}" style="background:${METRO_LINE[n]?.colour ?? '#64748B'}">${n}</span>`;
+
+/** Straight-line metres ×1.25 for the streets, at 80 m a minute. */
+export const walkMinutes = (metres: number): number => Math.max(1, Math.round((metres * 1.25) / 80));
 
 /** Classes of the primary call-to-action button. */
 export const PRIMARY = 'bg-gradient-to-r from-sky-600 to-blue-600 text-white';

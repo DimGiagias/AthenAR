@@ -1,6 +1,7 @@
 // What the exhibit page's "Around the exhibit" sheet shows for each exhibit,
 // from the City of Athens open data: its neighbourhood, its air station and its
-// nearest metro. scripts/fetch-area-data.mjs picks them and writes areaData.ts.
+// nearest metro; and every metro station, for the explore map's layer.
+// scripts/fetch-area-data.mjs picks them and writes areaData.ts.
 import type { Lang } from './types';
 
 export type Named = Record<Lang, string>;
@@ -23,6 +24,9 @@ export interface MetroStation {
     lines: number[];
     lat: number;
     lng: number;
+}
+
+export interface NearbyMetro extends MetroStation {
     /** Straight-line metres from the exhibit. */
     metres: number;
 }
@@ -33,7 +37,7 @@ export interface ExhibitArea {
     /** A station close by, shown when `air` has stopped reporting; null if none is close. */
     airBackup: AirStation | null;
     /** The nearest metro station, and the next one if it is close too. */
-    metro: MetroStation[];
+    metro: NearbyMetro[];
 }
 
 /** One hourly reading of an air station (features/air.ts). */
@@ -53,9 +57,15 @@ export interface AirReading {
     humidity: number | null;
 }
 
-/** Where each metro line runs. */
-export const METRO_LINE: Record<number, Named> = {
-    1: { el: 'Πειραιάς – Κηφισιά', en: 'Piraeus – Kifisia' },
-    2: { el: 'Ανθούπολη – Ελληνικό', en: 'Anthoupoli – Elliniko' },
-    3: { el: 'Δημοτικό Θέατρο – Αεροδρόμιο', en: 'Dimotiko Theatro – Airport' },
+/** Each metro line: where it runs, and its colour. */
+export const METRO_LINE: Record<number, { ends: Named; colour: string }> = {
+    1: { ends: { el: 'Πειραιάς – Κηφισιά', en: 'Piraeus – Kifisia' }, colour: '#16A34A' },
+    2: { ends: { el: 'Ανθούπολη – Ελληνικό', en: 'Anthoupoli – Elliniko' }, colour: '#DC2626' },
+    3: { ends: { el: 'Δημοτικό Θέατρο – Αεροδρόμιο', en: 'Dimotiko Theatro – Airport' }, colour: '#2563EB' },
 };
+
+/** A station's colour: its line's, split diagonally for two lines. */
+export function metroFill(lines: readonly number[]): string {
+    const [a, b] = lines.map((n) => METRO_LINE[n]?.colour ?? '#64748B');
+    return b ? `linear-gradient(135deg, ${a} 50%, ${b} 50%)` : (a ?? '#64748B');
+}
