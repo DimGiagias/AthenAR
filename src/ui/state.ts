@@ -14,6 +14,8 @@ export interface UiState {
     /** Where closing the AR view goes. */
     arBack: Screen;
     exhibitTab: 'stories' | 'memories';
+    /** Exhibit page: the story being read in the sheet (index into the exhibit's AR stories), or null. */
+    storySheet: number | null;
     /** Live AR: the story card of the selected pin is open. */
     story: boolean;
     /** Room AR: which tool's ruler is open, if any. */
@@ -28,6 +30,7 @@ let ui: UiState = {
     exhibitBack: 'explore',
     arBack: 'explore',
     exhibitTab: 'stories',
+    storySheet: null,
     story: false,
     roomTool: null,
     memorySheet: false,

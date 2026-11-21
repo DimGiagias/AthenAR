@@ -76,7 +76,7 @@ function renderStories(s: Readonly<AppState>, u: Readonly<UiState>): void {
         list = stories
             .map(
                 (h, i) => `
-                <button onclick="app.openAr(${i})" class="w-full text-left flex items-start gap-3 py-3 ${i < stories.length - 1 ? 'border-b border-sky-100' : ''} group">
+                <button onclick="app.readStory(${i})" class="w-full text-left flex items-start gap-3 py-3 ${i < stories.length - 1 ? 'border-b border-sky-100' : ''} ${u.storySheet === i ? 'bg-sky-50 rounded-xl -mx-2 px-2 w-[calc(100%+16px)]' : ''} group">
                     <span class="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white text-[13px] font-semibold flex items-center justify-center shadow-sm">${i + 1}</span>
                     <span class="flex-1 min-w-0 flex flex-col gap-0.5">
                         <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-700">${escapeHtml(h.type)}</span>
@@ -124,6 +124,49 @@ function renderStories(s: Readonly<AppState>, u: Readonly<UiState>): void {
     );
 }
 
+/**
+ * One AR story to read before going into AR: number, type, title, the text,
+ * ‹ › through the exhibit's stories, and "See it in AR" on that story's pin.
+ */
+function storySheetHtml(s: Readonly<AppState>, index: number, animate: boolean): string {
+    const stories = currentExhibit(s)[s.lang].hotspots;
+    const h = stories[index];
+    if (!h) return '';
+    const n = stories.length;
+    const nav = (glyph: 'chevronLeft' | 'chevronRight', delta: number, label: string): string =>
+        `<button onclick="app.storyStep(${delta})" aria-label="${label}" class="w-[38px] h-[38px] rounded-xl border border-sky-200 bg-sky-50 text-sky-700 flex items-center justify-center hover:bg-sky-100 transition">${icon(glyph, 'w-4 h-4')}</button>`;
+    const dots = stories.map((_, i) => `<span class="h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-sky-600' : 'w-1.5 bg-sky-200'}"></span>`).join('');
+    // A resident's memory is a quote: it starts with a quotation mark.
+    const quote = /^["«“]/.test(h.text.trimStart());
+    return `<div class="absolute inset-0 bg-slate-950/45 ${animate ? 'fade-in' : ''}" onclick="app.closeStorySheet()"></div>
+        <div role="dialog" aria-modal="true" aria-labelledby="storySheetTitle" class="${animate ? 'sheet-in' : ''} absolute inset-x-0 bottom-0 bg-white rounded-t-3xl border-t border-sky-200 px-[18px] flex flex-col gap-3.5" style="padding-bottom: max(18px, env(safe-area-inset-bottom))">
+            <span class="self-center w-10 h-1 rounded-full bg-sky-200 mt-2.5"></span>
+            <div class="flex items-start gap-3">
+                <span class="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white text-[15px] font-semibold flex items-center justify-center shadow-sm">${index + 1}</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-700">${escapeHtml(h.type)}</span>
+                    <h2 id="storySheetTitle" class="mt-0.5 text-[19px] leading-6 font-semibold text-marble-ink">${escapeHtml(h.title)}</h2>
+                </span>
+                <button onclick="app.closeStorySheet()" aria-label="${t('close')}" class="shrink-0 w-[34px] h-[34px] rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">${icon('x', 'w-4 h-4')}</button>
+            </div>
+            <p class="text-[15px] leading-6 text-slate-700 ${quote ? 'italic' : ''}">${escapeHtml(h.text)}</p>
+            ${
+                n > 1
+                    ? `<div class="flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between">
+                            ${nav('chevronLeft', -1, t('storyPrev'))}
+                            <span class="text-xs font-semibold text-slate-500">${t('storyOf', { i: index + 1, n })}</span>
+                            ${nav('chevronRight', 1, t('storyNext'))}
+                        </div>
+                        <div class="flex justify-center gap-1.5">${dots}</div>
+                    </div>`
+                    : ''
+            }
+            <button onclick="app.storyAr(${index})" class="h-[52px] rounded-2xl ${PRIMARY} text-[15px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_12px_24px_rgba(37,99,235,0.28)] active:scale-[0.98] transition">${icon('scanEye', 'w-[22px] h-[22px]')}${t('btnSeeAr')}</button>
+            <span class="-mt-2 text-center text-[11px] text-slate-500">${t('storyArHint', { i: index + 1 })}</span>
+        </div>`;
+}
+
 /** The hero photo, with its credit; the drawing shows when there is none or it fails to load. */
 function mountPhoto(): void {
     const img = $('xPhoto') as HTMLImageElement | null;
@@ -167,7 +210,19 @@ export function mountExhibit(): void {
 
     view((s) => [s.lang, s.exhibitId, s.stamps, s.gps, s.coords, s.accuracy, s.heading, s.demoMode], renderStamp);
     view((s) => [s.lang, s.exhibitId, s.gps, s.coords, s.demoMode, s.audioPlaying], renderBody);
-    view((s, u) => [s.lang, s.exhibitId, s.memories, u.exhibitTab], renderStories);
+    view((s, u) => [s.lang, s.exhibitId, s.memories, u.exhibitTab, u.storySheet], renderStories);
+    // Reading an AR story: only over the exhibit page. It slides in when it
+    // opens, not again on every ‹ ›.
+    let sheetOpen = false;
+    view(
+        (s, u) => [s.lang, s.exhibitId, u.screen, u.storySheet],
+        (s, u) => {
+            const html = u.screen === 'exhibit' && u.storySheet !== null ? storySheetHtml(s, u.storySheet, !sheetOpen) : '';
+            sheetOpen = html !== '';
+            setHidden('storySheet', !sheetOpen);
+            setHtml('storySheet', html);
+        },
+    );
     view(
         (s) => [s.exhibitId],
         (s) => {

@@ -64,11 +64,29 @@ export const app = {
         selectExhibit(id);
         const u = getUi();
         const back = u.screen === 'exhibit' || u.screen === 'ar' ? u.exhibitBack : u.screen;
-        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories' });
+        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null });
         document.getElementById('xScroll')?.scrollTo(0, 0);
     },
     back(): void {
-        setUi({ screen: getUi().exhibitBack });
+        setUi({ screen: getUi().exhibitBack, storySheet: null });
+    },
+    readStory(index: number): void {
+        setUi({ storySheet: index });
+    },
+    storyStep(delta: number): void {
+        const open = getUi().storySheet;
+        const total = getExhibit(getState().exhibitId)[getState().lang].hotspots.length;
+        if (open === null || total < 1) return;
+        setUi({ storySheet: (open + delta + total) % total });
+    },
+    closeStorySheet(): void {
+        setUi({ storySheet: null });
+    },
+    /** The sheet's "See it in AR": Live AR on that story's pin, with its card already open. */
+    storyAr(index: number): void {
+        setUi({ storySheet: null });
+        app.openAr(index);
+        setUi({ story: true });
     },
     /**
      * Live AR opens as the scanner: the model appears once a picture or the
