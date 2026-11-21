@@ -1,6 +1,6 @@
 // Dev tool: compile the images in src/data/arTargets.ts into the file the
 // image tracker reads (public/ar/targets.mind).
-import { IMAGE_TARGETS } from '../src/data/arTargets';
+import { IMAGE_TARGETS, type ImageArea } from '../src/data/arTargets';
 import { getExhibit } from '../src/features/exhibits';
 import { Compiler } from '../src/vendor/mindar/mindar-image.prod.js';
 
@@ -21,6 +21,18 @@ function load(src: string): Promise<HTMLImageElement> {
     });
 }
 
+/** The tracked area of the image (the whole image if none), as a new image. */
+async function crop(img: HTMLImageElement, area: ImageArea | undefined): Promise<HTMLImageElement> {
+    if (!area) return img;
+    const sx = area.x * img.naturalWidth;
+    const sy = area.y * img.naturalHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(area.width * img.naturalWidth);
+    canvas.height = Math.round(area.height * img.naturalHeight);
+    (canvas.getContext('2d') as CanvasRenderingContext2D).drawImage(img, sx, sy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+    return load(canvas.toDataURL('image/png'));
+}
+
 const images = Promise.all(
     IMAGE_TARGETS.map(async (target, i) => {
         const src = `/${target.image}`;
@@ -30,10 +42,10 @@ const images = Promise.all(
         (li.querySelector('img') as HTMLImageElement).src = src;
         (li.querySelector('code') as HTMLElement).textContent = `public/${target.image} · ${target.kind} · ${target.placement}`;
         list.append(li);
-        const img = await load(src);
+        const img = await crop(await load(src), target.area);
         const size = li.querySelector('.size') as HTMLElement;
         const side = Math.max(img.naturalWidth, img.naturalHeight);
-        size.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+        size.textContent = `${img.naturalWidth} × ${img.naturalHeight} px${target.area ? ' (tracked area)' : ''}`;
         if (side > MAX_SIDE || Math.min(img.naturalWidth, img.naturalHeight) < MIN_SIDE) {
             size.className = 'bad';
             size.textContent += ` — best between ${MIN_SIDE} and ${MAX_SIDE} px per side`;

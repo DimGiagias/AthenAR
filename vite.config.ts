@@ -40,9 +40,10 @@ export default defineConfig(({ mode }) => ({
             },
             workbox: {
                 // Precache the whole app (and, later, the narration clips) so it
-                // runs with no network at all.
+                // runs with no network at all. The largest file is the AR poster
+                // targets (ar/targets.mind, about 7 MB for the 11 posters).
                 globPatterns: ['**/*.{js,mjs,css,html,svg,png,jpg,webmanifest,mp3,pbf,geojson,mind}'],
-                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+                maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
             },
         }),
     ],

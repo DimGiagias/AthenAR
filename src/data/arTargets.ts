@@ -28,15 +28,52 @@ export interface ImageTarget {
      *  - 'flat': the image lies on a table; the building rises out of it.
      */
     placement: 'upright' | 'flat';
-    /** Width of the model as a share of the image's width (1 = as wide as the image). */
+    /**
+     * The part of the image the tracker looks for, as shares of the image's
+     * width and height. Leave it out to track the whole image.
+     */
+    area?: ImageArea;
+    /** Width of the model as a share of the tracked area's width (1 = as wide as the area). */
     modelWidth: number;
+}
+
+export interface ImageArea {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 
 export const AR_TARGETS_FILE = 'ar/targets.mind';
 
+/**
+ * The photo panel of the A3 posters (layout px 56, 160, 1011 × 748 of 1123 × 1587).
+ * All posters share the rest of their layout (header, era dial, QR card), and
+ * the tracker takes the first target that matches, so a whole-poster target
+ * finds the same poster for every one. The photos tell them apart.
+ */
+const POSTER_PHOTO: ImageArea = { x: 56 / 1123, y: 160 / 1587, width: 1011 / 1123, height: 748 / 1587 };
+
+const poster = (exhibitId: number, image: string): ImageTarget => ({
+    exhibitId,
+    kind: 'poster',
+    image,
+    placement: 'upright',
+    area: POSTER_PHOTO,
+    modelWidth: 1,
+});
+
 // The A3 posters (print files in posters/). Their QR codes open ?ar=<exhibitId>.
 export const IMAGE_TARGETS: ImageTarget[] = [
-    { exhibitId: 0, kind: 'poster', image: 'ar/poster-serafeio.jpg', placement: 'upright', modelWidth: 0.9 },
-    { exhibitId: 1, kind: 'poster', image: 'ar/poster-gazi.jpg', placement: 'upright', modelWidth: 0.9 },
-    { exhibitId: 10, kind: 'poster', image: 'ar/poster-acropolis.jpg', placement: 'upright', modelWidth: 0.9 },
+    poster(0, 'ar/poster-serafeio.jpg'),
+    poster(1, 'ar/poster-gazi.jpg'),
+    poster(2, 'ar/poster-kypseli.jpg'),
+    poster(3, 'ar/poster-blue-building.jpg'),
+    poster(4, 'ar/poster-varvakeios.jpg'),
+    poster(5, 'ar/poster-city-hall.jpg'),
+    poster(6, 'ar/poster-hephaestus.jpg'),
+    poster(7, 'ar/poster-tower-of-winds.jpg'),
+    poster(8, 'ar/poster-kapnikarea.jpg'),
+    poster(9, 'ar/poster-agioi-asomatoi.jpg'),
+    poster(10, 'ar/poster-acropolis.jpg'),
 ];
