@@ -7,6 +7,7 @@ import { geofenceRadius, MAP_PINS } from '../../data/geo';
 import type { EraRoom, Exhibit } from '../../data/types';
 import { matchesFilters } from '../../features/exhibits';
 import { venueById } from '../../features/rewards';
+import { EXHIBIT_AREAS } from '../../data/areaData';
 import { venueName } from '../../data/culture';
 import type { AppState } from '../../state/store';
 import { app } from '../actions';
@@ -26,8 +27,21 @@ const ERAS: Array<{ id: EraRoom | 'all'; label: () => string; pill: string; dot:
     { id: 'modern', label: () => t('chipModern'), pill: 'bg-blue-50 border-blue-300 text-blue-800', dot: 'bg-blue-600' },
 ];
 
+/** The place marked on the map, in the interface language. */
+function mapPlace(s: Readonly<AppState>, u: Readonly<UiState>): MapView['place'] {
+    const p = u.mapPlace;
+    if (p?.kind === 'venue') {
+        const venue = venueById(p.id);
+        return venue ? { kind: 'venue', lat: venue.lat, lng: venue.lng, label: venueName(venue, s.lang) } : null;
+    }
+    if (p?.kind === 'metro') {
+        const station = EXHIBIT_AREAS[p.exhibit]?.metro[p.index];
+        return station ? { kind: 'metro', lat: station.lat, lng: station.lng, label: station.name[s.lang] } : null;
+    }
+    return null;
+}
+
 function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
-    const venue = u.mapVenue === null ? undefined : venueById(u.mapVenue);
     return {
         lang: s.lang,
         eraFilter: s.eraFilter,
@@ -37,7 +51,7 @@ function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
             return { id: p.id, num: p.num.slice(1), label: s.lang === 'el' ? p.labelEl : p.labelEn, room: p.eraRoom, lat: ex.coords[0], lng: ex.coords[1], dimmed: !matchesFilters(ex, s) };
         }),
         user: s.gps === 'active' && s.coords ? { lat: s.coords[0], lng: s.coords[1], demo: s.demoMode, label: t(s.demoMode ? 'youLabelDemo' : 'youLabel') } : null,
-        venue: venue ? { lat: venue.lat, lng: venue.lng, label: venueName(venue, s.lang) } : null,
+        place: mapPlace(s, u),
         roomLabels: { ancient: t('mapRoomAncient'), byzantine: t('mapRoomByzantine'), modern: t('mapRoomModern') },
         unavailableText: t('mapUnavailable'),
     };
@@ -199,7 +213,7 @@ export function mountExplore(): void {
     if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true, onBearing });
 
     view(
-        (s, u) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode, u.mapVenue],
+        (s, u) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode, u.mapPlace],
         (s, u) => updateStreetMap(mapView(s, u)),
     );
 

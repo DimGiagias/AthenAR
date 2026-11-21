@@ -12,6 +12,7 @@ import { initPlatform } from './platform/native';
 import { setState } from './state/store';
 import { app } from './ui/actions';
 import { mountAr } from './ui/render/ar';
+import { mountAreaSheet } from './ui/render/areaSheet';
 import { mountExhibit } from './ui/render/exhibit';
 import { mountExplore } from './ui/render/explore';
 import { mountPassport } from './ui/render/passport';
@@ -51,6 +52,7 @@ function boot(): void {
     mountShell();
     mountExplore();
     mountExhibit();
+    mountAreaSheet();
     mountAr();
     mountPassport();
     mountRewardList();

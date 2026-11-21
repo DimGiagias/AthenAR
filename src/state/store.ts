@@ -4,6 +4,7 @@
 //  - all state lives here; nothing is remembered only in the DOM;
 //  - feature code changes state with setState() and never touches the DOM;
 //  - UI code reads state inside watch() callbacks and only writes the DOM.
+import type { AirReading } from '../data/area';
 import type { ArEra, EraRoom, Lang, Memory } from '../data/types';
 import { START_SCALE } from '../features/ar/roomControls';
 import { loadJson, saveJson } from '../platform/storage';
@@ -72,6 +73,10 @@ export interface AppState {
     rewardsClaimed: Record<number, { at: number; venue: number }>;
     memories: Memory[];
 
+    // City open data
+    /** Air readings by station id, newest first (features/air.ts), and whether a fetch is under way. */
+    air: { loading: boolean; readings: Record<number, AirReading[]> };
+
     // chrome
     toast: { text: string; seq: number } | null;
     /** How this browser can install the app: Chrome's prompt, Safari's steps (iPhone), or not at all. */
@@ -119,6 +124,8 @@ let state: AppState = {
     stamps: saved.stamps && typeof saved.stamps === 'object' ? saved.stamps : {},
     rewardsClaimed: saved.rewardsClaimed && typeof saved.rewardsClaimed === 'object' ? saved.rewardsClaimed : {},
     memories: [],
+
+    air: { loading: false, readings: {} },
 
     toast: null,
     installable: null,

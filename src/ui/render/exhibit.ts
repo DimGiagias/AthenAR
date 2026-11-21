@@ -56,8 +56,11 @@ function renderBody(s: Readonly<AppState>): void {
         `<button onclick="app.openAr()" class="flex-1 min-w-0 h-[52px] px-3 rounded-2xl ${PRIMARY} text-[15px] font-semibold flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(2,132,199,0.22)] hover:opacity-95 transition">
             ${icon('scanEye', 'w-5 h-5 shrink-0')}<span class="truncate">${t('btnSeeAr')}</span>
         </button>
-        <button onclick="app.audio()" aria-pressed="${s.audioPlaying}" class="shrink-0 w-[124px] h-[52px] rounded-2xl bg-white border-[1.5px] border-sky-300 text-sky-700 text-[15px] font-semibold flex items-center justify-center gap-2 hover:bg-sky-50 transition">
+        <button onclick="app.audio()" aria-pressed="${s.audioPlaying}" class="shrink-0 w-[108px] h-[52px] rounded-2xl bg-white border-[1.5px] border-sky-300 text-sky-700 text-[15px] font-semibold flex items-center justify-center gap-2 hover:bg-sky-50 transition">
             ${icon(s.audioPlaying ? 'pause' : 'headphones', 'w-5 h-5')}${t(s.audioPlaying ? 'btnAudioStop' : 'btnListen')}
+        </button>
+        <button onclick="app.openArea()" aria-label="${t('areaTitle')}" class="shrink-0 w-[52px] h-[52px] rounded-2xl bg-white border-[1.5px] border-sky-300 text-sky-700 flex items-center justify-center hover:bg-sky-50 transition">
+            ${icon('info', 'w-[22px] h-[22px]')}
         </button>`,
     );
     setHtml('xDesc', d.shortDesc); // the exhibit texts are our own and may hold markup

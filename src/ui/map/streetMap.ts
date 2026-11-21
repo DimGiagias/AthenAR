@@ -33,8 +33,8 @@ export interface MapView {
     selectedId: number;
     pins: MapPinView[];
     user: { lat: number; lng: number; demo: boolean; label: string } | null;
-    /** A culture venue to mark, from a reward's "On the map". */
-    venue: { lat: number; lng: number; label: string } | null;
+    /** A place to mark: a reward's culture venue or an exhibit's metro station, from their "On the map". */
+    place: { kind: 'venue' | 'metro'; lat: number; lng: number; label: string } | null;
     roomLabels: Record<EraRoom, string>;
     /** shown instead of the map if the device cannot draw it */
     unavailableText: string;
@@ -56,7 +56,7 @@ let onPickPin: (id: number) => void = () => {};
 
 const pinMarkers = new Map<number, { marker: Marker; el: HTMLButtonElement; label: HTMLSpanElement }>();
 let userMarker: { marker: Marker; el: HTMLDivElement; label: HTMLSpanElement } | null = null;
-let venueMarker: { marker: Marker; label: HTMLSpanElement } | null = null;
+let placeMarker: { kind: 'venue' | 'metro'; marker: Marker; label: HTMLSpanElement } | null = null;
 
 let fittedFor = '';
 let fitPending = false;
@@ -234,7 +234,7 @@ function apply(): void {
     drawRooms();
     drawPins();
     drawUser();
-    drawVenue();
+    drawPlace();
     syncLabelVisibility();
 
     if (view.eraFilter !== fittedFor) {
@@ -301,26 +301,27 @@ function drawUser(): void {
     if (userMarker.label.textContent !== view.user.label) userMarker.label.textContent = view.user.label;
 }
 
-function drawVenue(): void {
+function drawPlace(): void {
     if (!map || !view || !MarkerClass) return;
-    if (!view.venue) {
-        venueMarker?.marker.remove();
-        venueMarker = null;
-        return;
+    const place = view.place;
+    if (placeMarker && placeMarker.kind !== place?.kind) {
+        placeMarker.marker.remove();
+        placeMarker = null;
     }
-    if (!venueMarker) {
+    if (!place) return;
+    if (!placeMarker) {
         const el = document.createElement('div');
-        el.className = 'map-venue';
+        el.className = 'map-place';
         const label = document.createElement('span');
-        label.className = 'map-venue__label';
+        label.className = 'map-place__label';
         const dot = document.createElement('span');
-        dot.className = 'map-venue__dot';
-        dot.innerHTML = icon('landmark', 'w-3.5 h-3.5', 2.4);
+        dot.className = 'map-place__dot';
+        dot.innerHTML = icon(place.kind === 'metro' ? 'train' : 'landmark', 'w-3.5 h-3.5', 2.4);
         el.append(label, dot);
-        venueMarker = { label, marker: new MarkerClass({ element: el, anchor: 'center' }).setLngLat([view.venue.lng, view.venue.lat]).addTo(map) };
+        placeMarker = { kind: place.kind, label, marker: new MarkerClass({ element: el, anchor: 'center' }).setLngLat([place.lng, place.lat]).addTo(map) };
     }
-    venueMarker.marker.setLngLat([view.venue.lng, view.venue.lat]);
-    if (venueMarker.label.textContent !== view.venue.label) venueMarker.label.textContent = view.venue.label;
+    placeMarker.marker.setLngLat([place.lng, place.lat]);
+    if (placeMarker.label.textContent !== place.label) placeMarker.label.textContent = place.label;
 }
 
 function syncLabelVisibility(): void {

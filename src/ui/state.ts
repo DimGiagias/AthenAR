@@ -5,6 +5,8 @@ import { getState, watch, type AppState } from '../state/store';
 export type Screen = 'explore' | 'exhibit' | 'ar' | 'passport';
 /** Room AR's two small tools, each opening a ruler above the big button. */
 export type RoomTool = 'size' | 'turn';
+/** A place marked on the explore map: a reward's culture venue, or one of an exhibit's metro stations. */
+export type MapPlace = { kind: 'venue'; id: number } | { kind: 'metro'; exhibit: number; index: number };
 
 export interface UiState {
     welcome: boolean;
@@ -16,6 +18,8 @@ export interface UiState {
     exhibitTab: 'stories' | 'memories';
     /** Exhibit page: the story being read in the sheet (index into the exhibit's AR stories), or null. */
     storySheet: number | null;
+    /** Exhibit page: the "Around the exhibit" sheet, on its list or one of its details, or null. */
+    areaSheet: 'list' | 'air' | 'metro' | null;
     /** Live AR: the story card of the selected pin is open. */
     story: boolean;
     /** Room AR: which tool's ruler is open, if any. */
@@ -31,8 +35,8 @@ export interface UiState {
     rewardFilter: string;
     /** The ticket of a reward for one venue, or null. */
     rewardTicket: { reward: number; venue: number } | null;
-    /** Explore map: a culture venue marked on it (data/culture.ts id), or null. */
-    mapVenue: number | null;
+    /** Explore map: a place marked on it, or null. */
+    mapPlace: MapPlace | null;
 }
 
 let ui: UiState = {
@@ -42,6 +46,7 @@ let ui: UiState = {
     arBack: 'explore',
     exhibitTab: 'stories',
     storySheet: null,
+    areaSheet: null,
     story: false,
     roomTool: null,
     memorySheet: false,
@@ -51,7 +56,7 @@ let ui: UiState = {
     rewardPick: null,
     rewardFilter: 'all',
     rewardTicket: null,
-    mapVenue: null,
+    mapPlace: null,
 };
 
 type Select = (s: Readonly<AppState>, u: Readonly<UiState>) => readonly unknown[];

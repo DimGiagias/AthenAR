@@ -1,11 +1,13 @@
 // Every user action, by name. The markup calls them through inline handlers
 // (onclick="app.openExhibit(3)"); main.ts puts this object on window.app.
+import { EXHIBIT_AREAS } from '../data/areaData';
 import { exhibitsData } from '../data/exhibits';
 import type { ArEra, EraRoom, Lang } from '../data/types';
 import { scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
 import { foundTarget, stopImageAr } from '../features/ar/imageAr';
 import { exitRoom, placeHere, placeInRoom, resetRoomSize, resetRoomTurn, toggleRoomSpin } from '../features/ar/room';
 import { isOnSite } from '../features/ar/verification';
+import { loadAir } from '../features/air';
 import { setAudioLang, toggleAudio, toggleAudioSpeed } from '../features/audio';
 import { closeInstallSheet, install, showInstallSheet } from '../features/install';
 import { currentAssessment, getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
@@ -66,11 +68,11 @@ export const app = {
         selectExhibit(id);
         const u = getUi();
         const back = u.screen === 'exhibit' || u.screen === 'ar' ? u.exhibitBack : u.screen;
-        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null, mapVenue: null });
+        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null, areaSheet: null, mapPlace: null });
         document.getElementById('xScroll')?.scrollTo(0, 0);
     },
     back(): void {
-        setUi({ screen: getUi().exhibitBack, storySheet: null });
+        setUi({ screen: getUi().exhibitBack, storySheet: null, areaSheet: null });
     },
     readStory(index: number): void {
         setUi({ storySheet: index });
@@ -130,7 +132,7 @@ export const app = {
     /** A tap on an exhibit card in the list: select it and show it on the map. */
     focusExhibit(id: number): void {
         selectExhibit(id);
-        setUi({ mapVenue: null });
+        setUi({ mapPlace: null });
         const ex = exhibitsData[id];
         if (ex) focusStreetMapOn(ex.coords[0], ex.coords[1]);
         // Without GPS the selected exhibit becomes the top card; bring it into view.
@@ -270,9 +272,30 @@ export const app = {
     venueOnMap(id: number): void {
         const venue = venueById(id);
         if (!venue) return;
-        setUi({ rewardTicket: null, rewardChoose: null, rewardList: false, screen: 'explore', mapVenue: id });
+        setUi({ rewardTicket: null, rewardChoose: null, rewardList: false, screen: 'explore', mapPlace: { kind: 'venue', id } });
         // after the explore screen is shown, so the map has its size
         window.setTimeout(() => focusStreetMapOn(venue.lat, venue.lng), 80);
+    },
+
+    // --- around the exhibit (City open data) ---
+    openArea(): void {
+        setUi({ areaSheet: 'list' });
+        const area = EXHIBIT_AREAS[getState().exhibitId];
+        if (area) void loadAir(area);
+    },
+    areaTo(to: 'list' | 'air' | 'metro'): void {
+        setUi({ areaSheet: to });
+    },
+    closeArea(): void {
+        setUi({ areaSheet: null });
+    },
+    /** "See it on the map": the explore map, moved to the station, with the station marked. */
+    metroOnMap(index: number): void {
+        const exhibit = getState().exhibitId;
+        const station = EXHIBIT_AREAS[exhibit]?.metro[index];
+        if (!station) return;
+        setUi({ areaSheet: null, screen: 'explore', mapPlace: { kind: 'metro', exhibit, index } });
+        window.setTimeout(() => focusStreetMapOn(station.lat, station.lng), 80);
     },
 
     // --- presenter tools ---

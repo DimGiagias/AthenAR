@@ -30,5 +30,15 @@ export function dayTime(ms: number, lang: AppState['lang']): string {
     return `${at.toLocaleDateString(LOCALE[lang], { day: 'numeric', month: 'short' })} · ${at.toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`;
 }
 
+/** "14:41" in the interface language, 24-hour. */
+export function clock(ms: number, lang: AppState['lang']): string {
+    return new Date(ms).toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+}
+
+/** A measurement with at most one decimal ("15,6" in Greek), or a dash when missing. */
+export function num(value: number | null, lang: AppState['lang']): string {
+    return value === null ? '–' : value.toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 });
+}
+
 /** Classes of the primary call-to-action button. */
 export const PRIMARY = 'bg-gradient-to-r from-sky-600 to-blue-600 text-white';
