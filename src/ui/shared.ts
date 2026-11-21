@@ -22,5 +22,13 @@ export function roomLabel(room: EraRoom): string {
     return t(room === 'ancient' ? 'roomAncient' : room === 'byzantine' ? 'roomByzantine' : 'roomModern');
 }
 
+const LOCALE: Record<AppState['lang'], string> = { el: 'el-GR', en: 'en-GB' };
+
+/** "21 Nov · 14:41" in the interface language, 24-hour so it stays short. */
+export function dayTime(ms: number, lang: AppState['lang']): string {
+    const at = new Date(ms);
+    return `${at.toLocaleDateString(LOCALE[lang], { day: 'numeric', month: 'short' })} · ${at.toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`;
+}
+
 /** Classes of the primary call-to-action button. */
 export const PRIMARY = 'bg-gradient-to-r from-sky-600 to-blue-600 text-white';

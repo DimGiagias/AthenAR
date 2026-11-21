@@ -13,6 +13,7 @@ import type { GeoJSONSource, LngLatBoundsLike, Map as MapLibreMap, Marker } from
 import { MAP_BBOX, ringCentre, roomOutline, type LngLat } from '../../data/mapAreas';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { EraRoom, Lang } from '../../data/types';
+import { icon } from '../icons';
 import { buildStyle, NAME_LAYERS, nameField, ROOM_COLOURS, roomOpacity } from './style';
 
 export interface MapPinView {
@@ -32,6 +33,8 @@ export interface MapView {
     selectedId: number;
     pins: MapPinView[];
     user: { lat: number; lng: number; demo: boolean; label: string } | null;
+    /** A culture venue to mark, from a reward's "On the map". */
+    venue: { lat: number; lng: number; label: string } | null;
     roomLabels: Record<EraRoom, string>;
     /** shown instead of the map if the device cannot draw it */
     unavailableText: string;
@@ -53,6 +56,7 @@ let onPickPin: (id: number) => void = () => {};
 
 const pinMarkers = new Map<number, { marker: Marker; el: HTMLButtonElement; label: HTMLSpanElement }>();
 let userMarker: { marker: Marker; el: HTMLDivElement; label: HTMLSpanElement } | null = null;
+let venueMarker: { marker: Marker; label: HTMLSpanElement } | null = null;
 
 let fittedFor = '';
 let fitPending = false;
@@ -230,6 +234,7 @@ function apply(): void {
     drawRooms();
     drawPins();
     drawUser();
+    drawVenue();
     syncLabelVisibility();
 
     if (view.eraFilter !== fittedFor) {
@@ -294,6 +299,28 @@ function drawUser(): void {
     userMarker.el.classList.add('map-user');
     userMarker.el.classList.toggle('map-user--demo', view.user.demo);
     if (userMarker.label.textContent !== view.user.label) userMarker.label.textContent = view.user.label;
+}
+
+function drawVenue(): void {
+    if (!map || !view || !MarkerClass) return;
+    if (!view.venue) {
+        venueMarker?.marker.remove();
+        venueMarker = null;
+        return;
+    }
+    if (!venueMarker) {
+        const el = document.createElement('div');
+        el.className = 'map-venue';
+        const label = document.createElement('span');
+        label.className = 'map-venue__label';
+        const dot = document.createElement('span');
+        dot.className = 'map-venue__dot';
+        dot.innerHTML = icon('landmark', 'w-3.5 h-3.5', 2.4);
+        el.append(label, dot);
+        venueMarker = { label, marker: new MarkerClass({ element: el, anchor: 'center' }).setLngLat([view.venue.lng, view.venue.lat]).addTo(map) };
+    }
+    venueMarker.marker.setLngLat([view.venue.lng, view.venue.lat]);
+    if (venueMarker.label.textContent !== view.venue.label) venueMarker.label.textContent = view.venue.label;
 }
 
 function syncLabelVisibility(): void {

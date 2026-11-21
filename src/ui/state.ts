@@ -22,6 +22,17 @@ export interface UiState {
     roomTool: RoomTool | null;
     memorySheet: boolean;
     memoryExhibitId: number;
+    /** Passport: the screen listing every reward is open. */
+    rewardList: boolean;
+    /** Rewards: the reward (index into REWARDS) whose venue is being chosen, or null. */
+    rewardChoose: number | null;
+    /** The venue chooser: the venue picked (data/culture.ts id), and the venue type shown ('all' or a type). */
+    rewardPick: number | null;
+    rewardFilter: string;
+    /** The ticket of a reward for one venue, or null. */
+    rewardTicket: { reward: number; venue: number } | null;
+    /** Explore map: a culture venue marked on it (data/culture.ts id), or null. */
+    mapVenue: number | null;
 }
 
 let ui: UiState = {
@@ -35,6 +46,12 @@ let ui: UiState = {
     roomTool: null,
     memorySheet: false,
     memoryExhibitId: 0,
+    rewardList: false,
+    rewardChoose: null,
+    rewardPick: null,
+    rewardFilter: 'all',
+    rewardTicket: null,
+    mapVenue: null,
 };
 
 type Select = (s: Readonly<AppState>, u: Readonly<UiState>) => readonly unknown[];

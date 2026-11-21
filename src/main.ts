@@ -15,6 +15,9 @@ import { mountAr } from './ui/render/ar';
 import { mountExhibit } from './ui/render/exhibit';
 import { mountExplore } from './ui/render/explore';
 import { mountPassport } from './ui/render/passport';
+import { mountRewardList } from './ui/render/rewardList';
+import { mountRewardChooser } from './ui/render/rewardChooser';
+import { mountRewardTicket } from './ui/render/rewardTicket';
 import { mountShell } from './ui/render/shell';
 import { mountInstallSheet } from './ui/render/installSheet';
 import { mountMemorySheet } from './ui/render/sheet';
@@ -50,6 +53,9 @@ function boot(): void {
     mountExhibit();
     mountAr();
     mountPassport();
+    mountRewardList();
+    mountRewardChooser();
+    mountRewardTicket();
     mountMemorySheet();
     mountInstallSheet();
 

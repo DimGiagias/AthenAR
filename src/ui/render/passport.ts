@@ -1,16 +1,19 @@
-// Passport: stamps, the next stamp nearby, your memories, and the
-// presenter tools (Demo Mode) folded away at the bottom.
+// Passport: stamps with the rewards marked on their progress bar, the rewards
+// card, the next stamp nearby, your memories, and the presenter tools (Demo
+// Mode) folded away at the bottom.
 import { exhibitsData } from '../../data/exhibits';
 import { MAP_PINS } from '../../data/geo';
 import { exhibitPhotos } from '../../data/photos';
+import { REWARDS, type Reward } from '../../data/rewards';
 import type { EraRoom, Exhibit } from '../../data/types';
 import { getExhibit, stampCount } from '../../features/exhibits';
+import { nextReward, unclaimedCount, unlockedAt } from '../../features/rewards';
 import type { AppState } from '../../state/store';
 import { setClass, setHtml, setText } from '../dom';
 import { escapeHtml } from '../escapeHtml';
 import { t } from '../i18n';
 import { icon } from '../icons';
-import { dist, metresTo, PRIMARY } from '../shared';
+import { dayTime, dist, metresTo, PRIMARY } from '../shared';
 import { view } from '../state';
 
 /** Seal colours per era room: ring, tint behind an empty seal, and the number. */
@@ -19,13 +22,6 @@ const SEAL: Record<EraRoom, { ring: string; tint: string; text: string; fill: st
     byzantine: { ring: 'border-indigo-500', tint: 'bg-indigo-50', text: 'text-indigo-700', fill: 'from-indigo-400 to-indigo-600' },
     modern: { ring: 'border-blue-500', tint: 'bg-blue-50', text: 'text-blue-700', fill: 'from-sky-400 to-blue-600' },
 };
-
-/** "21 Nov · 10:41" in the interface language. */
-function stampTime(ms: number, lang: AppState['lang']): string {
-    const at = new Date(ms);
-    const locale = lang === 'el' ? 'el-GR' : 'en-GB';
-    return `${at.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} · ${at.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
-}
 
 /**
  * One stamp as a round seal in its era colour. Collected: the exhibit's photo
@@ -51,7 +47,7 @@ function seal(ex: Exhibit, s: Readonly<AppState>): string {
             <span class="absolute -right-1 -bottom-0.5 w-[18px] h-[18px] rounded-full bg-emerald-500 border-2 border-white text-white flex items-center justify-center rotate-[8deg]">${icon('check', 'w-2.5 h-2.5', 3.5)}</span>
         </span>
         <span class="w-full text-center text-[10px] leading-tight font-semibold text-marble-ink truncate">${label}</span>
-        <span class="-mt-0.5 text-[9.5px] leading-tight font-semibold text-emerald-700 whitespace-nowrap">${stampTime(at, s.lang)}</span>
+        <span class="-mt-0.5 text-[9.5px] leading-tight font-semibold text-emerald-700 whitespace-nowrap">${dayTime(at, s.lang)}</span>
     </button>`;
 }
 
@@ -68,9 +64,48 @@ function stampsCard(s: Readonly<AppState>): string {
                 </span>
                 <span class="shrink-0 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[13px] font-semibold">${count} / ${total}</span>
             </div>
-            <div class="h-2 rounded-full bg-sky-100 overflow-hidden"><div class="h-2 rounded-full bg-gradient-to-r from-sky-400 to-blue-600 transition-all duration-500" style="width:${Math.round((count / total) * 100)}%"></div></div>
+            <div class="relative mx-3 py-2">
+                <div class="h-2 rounded-full bg-sky-100 overflow-hidden"><div class="h-2 rounded-full bg-gradient-to-r from-sky-400 to-blue-600 transition-all duration-500" style="width:${Math.round((count / total) * 100)}%"></div></div>
+                ${REWARDS.map((r, i) => milestone(r, i, s)).join('')}
+            </div>
             <div class="grid grid-cols-4 gap-x-1.5 gap-y-3 pt-1">${tiles}</div>
         </div>`;
+}
+
+/** A reward on the progress bar: a gift to come, a gift to claim (both open the list), or a tick once claimed (its ticket). */
+function milestone(reward: Reward, index: number, s: Readonly<AppState>): string {
+    const pos = `left:${(reward.stamps / exhibitsData.length) * 100}%`;
+    const label = t('rewardMilestone', { n: reward.stamps, reward: reward[s.lang].title });
+    const base = 'absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center';
+    if (unlockedAt(reward, s) === null) {
+        return `<button onclick="app.openRewards()" aria-label="${label}" class="${base} bg-white border-2 border-sky-200 text-slate-400" style="${pos}">${icon('gift', 'w-3 h-3')}</button>`;
+    }
+    const used = s.rewardsClaimed[reward.stamps] !== undefined;
+    return `<button onclick="${used ? `app.openClaimed(${index})` : 'app.openRewards()'}" aria-label="${label}" class="${base} border-2 border-white shadow-[0_3px_8px_rgba(37,99,235,0.35)] ${used ? 'bg-emerald-500' : 'bg-gradient-to-br from-sky-500 to-blue-600'} text-white" style="${pos}">${icon(used ? 'check' : 'gift', 'w-3 h-3', used ? 3 : 2)}</button>`;
+}
+
+/**
+ * The rewards: the next one to earn (or all earned), with a badge and a line
+ * when some are earned but not claimed. Opens the list of all rewards.
+ */
+function rewardsCard(s: Readonly<AppState>): string {
+    const next = nextReward(s);
+    const unclaimed = unclaimedCount(s);
+    const badge = unclaimed
+        ? `<span class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 border-2 border-white text-white text-[11px] font-bold flex items-center justify-center">${unclaimed}</span>`
+        : '';
+    const gift = `<span class="relative shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white flex items-center justify-center shadow-sm">${icon('gift', 'w-[22px] h-[22px]')}${badge}</span>`;
+    const link = unclaimed
+        ? `<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-rose-600">${unclaimed === 1 ? t('rewardsToClaimOne') : t('rewardsToClaim', { n: unclaimed })}${icon('chevronRight', 'w-3.5 h-3.5')}</span>`
+        : `<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-sky-700">${t('rewardsSeeAll')}${icon('chevronRight', 'w-3.5 h-3.5')}</span>`;
+    const left = next ? next.stamps - stampCount(s) : 0;
+    const body = next
+        ? `<span class="text-[10px] font-semibold uppercase tracking-[0.1em] text-sky-600">${left === 1 ? t('rewardNextKickerOne') : t('rewardNextKicker', { n: left })}</span>
+            <span class="text-sm font-semibold leading-snug text-marble-ink">${next[s.lang].mine} · ${next[s.lang].title}</span>`
+        : `<span class="text-sm font-semibold text-marble-ink">${t('rewardsAllDone')}</span>`;
+    return `<button onclick="app.openRewards()" class="w-full text-left flex items-center gap-3 p-3.5 rounded-3xl bg-gradient-to-br from-white via-sky-50 to-blue-50 border ${unclaimed ? 'border-rose-200' : 'border-sky-200'} shadow-sm hover:border-sky-400 transition">${gift}
+        <span class="flex-1 min-w-0 flex flex-col gap-1">${body}${link}</span>
+    </button>`;
 }
 
 function nextStampCard(s: Readonly<AppState>): string {
@@ -145,8 +180,8 @@ function installRow(s: Readonly<AppState>): string {
 
 export function mountPassport(): void {
     view(
-        (s) => [s.lang, s.stamps, s.memories, s.gps, s.coords, s.demoMode, s.installable],
-        (s) => setHtml('ppMain', stampsCard(s) + installRow(s) + nextStampCard(s) + memoriesCard(s)),
+        (s) => [s.lang, s.stamps, s.rewardsClaimed, s.memories, s.gps, s.coords, s.demoMode, s.installable],
+        (s) => setHtml('ppMain', stampsCard(s) + rewardsCard(s) + installRow(s) + nextStampCard(s) + memoriesCard(s)),
     );
 
     // Presenter tools: rendered separately so the open/closed state survives updates.

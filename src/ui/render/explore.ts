@@ -6,6 +6,8 @@ import { exhibitsData } from '../../data/exhibits';
 import { geofenceRadius, MAP_PINS } from '../../data/geo';
 import type { EraRoom, Exhibit } from '../../data/types';
 import { matchesFilters } from '../../features/exhibits';
+import { venueById } from '../../features/rewards';
+import { venueName } from '../../data/culture';
 import type { AppState } from '../../state/store';
 import { app } from '../actions';
 import { $, setClass, setHtml, setText } from '../dom';
@@ -13,7 +15,7 @@ import { t } from '../i18n';
 import { mountStreetMap, updateStreetMap, type MapView } from '../map/streetMap';
 import { icon } from '../icons';
 import { dist, metresTo, PRIMARY, ROOM_BADGE, roomLabel } from '../shared';
-import { view } from '../state';
+import { view, type UiState } from '../state';
 
 // The era filter: a dropdown pill that takes on the chosen era's colour.
 const ERA_PILL = 'relative h-7 max-w-[132px] pl-2 pr-1.5 rounded-full border text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition';
@@ -24,7 +26,8 @@ const ERAS: Array<{ id: EraRoom | 'all'; label: () => string; pill: string; dot:
     { id: 'modern', label: () => t('chipModern'), pill: 'bg-blue-50 border-blue-300 text-blue-800', dot: 'bg-blue-600' },
 ];
 
-function mapView(s: Readonly<AppState>): MapView {
+function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
+    const venue = u.mapVenue === null ? undefined : venueById(u.mapVenue);
     return {
         lang: s.lang,
         eraFilter: s.eraFilter,
@@ -34,6 +37,7 @@ function mapView(s: Readonly<AppState>): MapView {
             return { id: p.id, num: p.num.slice(1), label: s.lang === 'el' ? p.labelEl : p.labelEn, room: p.eraRoom, lat: ex.coords[0], lng: ex.coords[1], dimmed: !matchesFilters(ex, s) };
         }),
         user: s.gps === 'active' && s.coords ? { lat: s.coords[0], lng: s.coords[1], demo: s.demoMode, label: t(s.demoMode ? 'youLabelDemo' : 'youLabel') } : null,
+        venue: venue ? { lat: venue.lat, lng: venue.lng, label: venueName(venue, s.lang) } : null,
         roomLabels: { ancient: t('mapRoomAncient'), byzantine: t('mapRoomByzantine'), modern: t('mapRoomModern') },
         unavailableText: t('mapUnavailable'),
     };
@@ -195,8 +199,8 @@ export function mountExplore(): void {
     if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true, onBearing });
 
     view(
-        (s) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode],
-        (s) => updateStreetMap(mapView(s)),
+        (s, u) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode, u.mapVenue],
+        (s, u) => updateStreetMap(mapView(s, u)),
     );
 
     // GPS pill: green when on, pulsing while locating, amber when blocked or in Demo Mode.

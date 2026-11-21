@@ -68,6 +68,8 @@ export interface AppState {
     // passport & memories
     /** exhibit id -> time the stamp was collected (ms since epoch) */
     stamps: Record<number, number>;
+    /** reward stamp count (data/rewards.ts) -> when it was claimed, and for which venue (data/culture.ts id) */
+    rewardsClaimed: Record<number, { at: number; venue: number }>;
     memories: Memory[];
 
     // chrome
@@ -79,7 +81,7 @@ export interface AppState {
 }
 
 const PERSIST_KEY = 'athenar.state.v1';
-type Persisted = Pick<AppState, 'lang' | 'audioLang' | 'audioSpeed' | 'exhibitId' | 'stamps'>;
+type Persisted = Pick<AppState, 'lang' | 'audioLang' | 'audioSpeed' | 'exhibitId' | 'stamps' | 'rewardsClaimed'>;
 
 const saved = loadJson<Partial<Persisted>>(PERSIST_KEY, {});
 const isLang = (v: unknown): v is Lang => v === 'el' || v === 'en';
@@ -115,6 +117,7 @@ let state: AppState = {
     offTargetOverlay: false,
 
     stamps: saved.stamps && typeof saved.stamps === 'object' ? saved.stamps : {},
+    rewardsClaimed: saved.rewardsClaimed && typeof saved.rewardsClaimed === 'object' ? saved.rewardsClaimed : {},
     memories: [],
 
     toast: null,
@@ -174,6 +177,7 @@ function persist(): void {
         audioSpeed: state.audioSpeed,
         exhibitId: state.exhibitId,
         stamps: state.stamps,
+        rewardsClaimed: state.rewardsClaimed,
     };
     const json = JSON.stringify(slice);
     if (json !== lastPersisted) {

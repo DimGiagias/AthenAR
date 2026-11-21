@@ -11,6 +11,8 @@ import { closeInstallSheet, install, showInstallSheet } from '../features/instal
 import { currentAssessment, getExhibit, hotspotsFor, nearestExhibit } from '../features/exhibits';
 import { toggleDemoMode, toggleGps } from '../features/location';
 import { deleteMemory, MAX_AUTHOR_CHARS, MAX_STORY_CHARS, memoryPinLabels, submitMemory } from '../features/memories';
+import { knownPosition, venueById, venuesFor } from '../features/rewards';
+import { REWARDS } from '../data/rewards';
 import { collectStamp } from '../features/stamps';
 import { showToast } from '../features/toast';
 import { getState, setState } from '../state/store';
@@ -64,7 +66,7 @@ export const app = {
         selectExhibit(id);
         const u = getUi();
         const back = u.screen === 'exhibit' || u.screen === 'ar' ? u.exhibitBack : u.screen;
-        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null });
+        setUi({ screen: 'exhibit', exhibitBack: back, exhibitTab: 'stories', storySheet: null, mapVenue: null });
         document.getElementById('xScroll')?.scrollTo(0, 0);
     },
     back(): void {
@@ -128,6 +130,7 @@ export const app = {
     /** A tap on an exhibit card in the list: select it and show it on the map. */
     focusExhibit(id: number): void {
         selectExhibit(id);
+        setUi({ mapVenue: null });
         const ex = exhibitsData[id];
         if (ex) focusStreetMapOn(ex.coords[0], ex.coords[1]);
         // Without GPS the selected exhibit becomes the top card; bring it into view.
@@ -220,6 +223,56 @@ export const app = {
         selectExhibit(memory.exhibitId);
         const pins = hotspotsFor(getExhibit(memory.exhibitId), s.lang, s.memories, memoryPinLabels);
         app.openAr(Math.max(0, pins.findIndex((p) => p.memoryId === id)));
+    },
+
+    // --- rewards ---
+    openRewards(): void {
+        setUi({ rewardList: true });
+    },
+    closeRewards(): void {
+        setUi({ rewardList: false });
+    },
+    /** "Choose a venue" for an earned reward, with the nearest venue picked. */
+    chooseVenue(index: number): void {
+        const reward = REWARDS[index];
+        if (!reward) return;
+        const first = venuesFor(reward, knownPosition(getState()))[0];
+        setUi({ rewardChoose: index, rewardPick: first?.id ?? null, rewardFilter: 'all' });
+    },
+    pickVenue(id: number): void {
+        setUi({ rewardPick: id });
+    },
+    /** Show one venue type in the chooser; the pick moves to its nearest venue if it was another type. */
+    venueFilter(type: string): void {
+        const u = getUi();
+        const reward = u.rewardChoose === null ? undefined : REWARDS[u.rewardChoose];
+        if (!reward) return;
+        const shown = venuesFor(reward, knownPosition(getState())).filter((v) => type === 'all' || v.type === type);
+        const keep = shown.some((v) => v.id === u.rewardPick);
+        setUi({ rewardFilter: type, rewardPick: keep ? u.rewardPick : (shown[0]?.id ?? null) });
+    },
+    closeChooser(): void {
+        setUi({ rewardChoose: null });
+    },
+    /** A reward's ticket for one venue; it opens over the list, so closing it goes back there. */
+    openTicket(index: number, venue: number): void {
+        setUi({ rewardChoose: null, rewardTicket: { reward: index, venue } });
+    },
+    /** The ticket of a claimed reward, for the venue it was claimed at. */
+    openClaimed(index: number): void {
+        const claimed = REWARDS[index] && getState().rewardsClaimed[REWARDS[index].stamps];
+        if (claimed) app.openTicket(index, claimed.venue);
+    },
+    closeTicket(): void {
+        setUi({ rewardTicket: null });
+    },
+    /** "On the map": the explore map, moved to the venue, with the venue marked. */
+    venueOnMap(id: number): void {
+        const venue = venueById(id);
+        if (!venue) return;
+        setUi({ rewardTicket: null, rewardChoose: null, rewardList: false, screen: 'explore', mapVenue: id });
+        // after the explore screen is shown, so the map has its size
+        window.setTimeout(() => focusStreetMapOn(venue.lat, venue.lng), 80);
     },
 
     // --- presenter tools ---

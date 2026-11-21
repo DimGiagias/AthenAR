@@ -4,6 +4,7 @@ import { t } from '../ui/i18n';
 import { isOnSite } from './ar/verification';
 import { currentAssessment } from './exhibits';
 import { startGps, waitForFix } from './location';
+import { rewardAtCount } from './rewards';
 import { showToast } from './toast';
 
 const FIX_TIMEOUT_MS = 12000;
@@ -34,6 +35,7 @@ export async function collectStamp(): Promise<void> {
         return;
     }
 
-    setState({ stamps: { ...getState().stamps, [exhibitId]: Date.now() } });
-    showToast(t('toastStampAdded'));
+    const stamps = { ...getState().stamps, [exhibitId]: Date.now() };
+    setState({ stamps });
+    showToast(t(rewardAtCount(Object.keys(stamps).length) ? 'toastRewardUnlocked' : 'toastStampAdded'));
 }
