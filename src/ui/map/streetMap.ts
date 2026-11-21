@@ -1,6 +1,6 @@
 // The street map on the Explore screen: a real, offline map of Athens
 // (MapLibre drawing bundled OpenStreetMap tiles) with the exhibits, museum
-// rooms, corridors and the visitor on it.
+// rooms and the visitor on it.
 //
 // Like the 3D engine, this is a drawing module: it is given a container and a
 // plain description of what to show (`MapView`), and never reads the store.
@@ -12,8 +12,8 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { GeoJSONSource, LngLatBoundsLike, Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { MAP_BBOX, ringCentre, roomOutline, type LngLat } from '../../data/mapAreas';
 import type { Feature, FeatureCollection } from 'geojson';
-import type { CorridorId, EraRoom, Lang } from '../../data/types';
-import { buildStyle, corridorColour, NAME_LAYERS, nameField, ROOM_COLOURS, roomOpacity } from './style';
+import type { EraRoom, Lang } from '../../data/types';
+import { buildStyle, NAME_LAYERS, nameField, ROOM_COLOURS, roomOpacity } from './style';
 
 export interface MapPinView {
     id: number;
@@ -22,14 +22,13 @@ export interface MapPinView {
     room: EraRoom;
     lat: number;
     lng: number;
-    /** outside the current room / corridor filter */
+    /** outside the current room filter */
     dimmed: boolean;
 }
 
 export interface MapView {
     lang: Lang;
     eraFilter: EraRoom | 'all';
-    corridorFilter: CorridorId | 'all';
     selectedId: number;
     pins: MapPinView[];
     user: { lat: number; lng: number; demo: boolean; label: string } | null;
@@ -227,18 +226,15 @@ function drawRooms(): void {
 function apply(): void {
     if (!map || !view) return;
     for (const id of NAME_LAYERS) map.setLayoutProperty(id, 'text-field', nameField(view.lang));
-    map.setPaintProperty('corridors', 'line-color', corridorColour(view.corridorFilter));
     map.setPaintProperty('rooms-fill', 'fill-opacity', roomOpacity(view.eraFilter));
-    map.setPaintProperty('pireos-axis', 'fill-opacity', view.corridorFilter === 'all' || view.corridorFilter === 'peiraios' ? 0.1 : 0.03);
     drawRooms();
     drawPins();
     drawUser();
     syncLabelVisibility();
 
-    const filterKey = `${view.eraFilter}|${view.corridorFilter}`;
-    if (filterKey !== fittedFor) {
+    if (view.eraFilter !== fittedFor) {
         const first = fittedFor === '';
-        fittedFor = filterKey;
+        fittedFor = view.eraFilter;
         fitToFocus(!first);
     }
 }

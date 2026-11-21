@@ -1,7 +1,7 @@
 // Every user action, by name. The markup calls them through inline handlers
 // (onclick="app.openExhibit(3)"); main.ts puts this object on window.app.
 import { exhibitsData } from '../data/exhibits';
-import type { ArEra, CorridorId, EraRoom, Lang } from '../data/types';
+import type { ArEra, EraRoom, Lang } from '../data/types';
 import { scanLock, setArCamera, simulateWrongBuilding, wakeCompass } from '../features/ar/controls';
 import { foundTarget, stopImageAr } from '../features/ar/imageAr';
 import { cycleRoomSize, exitRoom, placeInRoom, rotateRoom } from '../features/ar/room';
@@ -90,9 +90,6 @@ export const app = {
     // --- explore ---
     eraFilter(era: EraRoom | 'all'): void {
         setState({ eraFilter: era });
-    },
-    corridor(value: string): void {
-        setState({ corridorFilter: value as CorridorId | 'all' });
     },
     toggleGps,
     zoomMap(steps: number): void {

@@ -4,10 +4,10 @@
 //  - all state lives here; nothing is remembered only in the DOM;
 //  - feature code changes state with setState() and never touches the DOM;
 //  - UI code reads state inside watch() callbacks and only writes the DOM.
-import type { ArEra, CorridorId, EraRoom, Lang, Memory } from '../data/types';
+import type { ArEra, EraRoom, Lang, Memory } from '../data/types';
 import { loadJson, saveJson } from '../platform/storage';
 
-export type Tab = 'corridors' | 'ar' | 'memories';
+export type Tab = 'explore' | 'ar' | 'memories';
 export type GpsStatus = 'off' | 'acquiring' | 'active' | 'denied' | 'unavailable' | 'unsupported';
 export type CameraStatus = 'off' | 'live' | 'simulated';
 /**
@@ -32,7 +32,6 @@ export interface AppState {
 
     // navigation & filters
     tab: Tab;
-    corridorFilter: CorridorId | 'all';
     eraFilter: EraRoom | 'all';
     exhibitId: number;
     hotspotIndex: number;
@@ -86,8 +85,7 @@ let state: AppState = {
     audioPlaying: false,
     audioProgress: 0,
 
-    tab: 'corridors',
-    corridorFilter: 'all',
+    tab: 'explore',
     eraFilter: 'all',
     exhibitId: typeof saved.exhibitId === 'number' && saved.exhibitId >= 0 && saved.exhibitId <= 10 ? saved.exhibitId : 0,
     hotspotIndex: 0,

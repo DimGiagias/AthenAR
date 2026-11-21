@@ -43,8 +43,7 @@ function renderBody(s: Readonly<AppState>): void {
     $('xBack')?.setAttribute('aria-label', t('back'));
     setHtml(
         'xHead',
-        `<p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-700 truncate">${d.corridorName}</p>
-        <div class="flex flex-wrap items-center gap-1.5 mt-2">
+        `<div class="flex flex-wrap items-center gap-1.5">
             <span class="px-2 py-0.5 rounded-lg bg-sky-100 text-sky-700 text-xs font-semibold">${ex.num}</span>
             <span class="px-2 py-0.5 rounded-lg border text-xs font-semibold ${ROOM_BADGE[ex.eraRoom]}">${roomLabel(ex.eraRoom)}</span>
             <span class="text-[13px] text-marble-muted">${ex.year}</span>

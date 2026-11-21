@@ -4,7 +4,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 0,
         num: '#01',
-        corridorId: 'peiraios',
         eraRoom: 'modern',
         year: '1904 / 1933',
         coords: [37.97328, 23.7062],
@@ -12,7 +11,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #01',
             roomBadge: '🏙️ Δωμάτιο ΙΙΙ: Νεότερη & Σύγχρονη',
-            corridorName: 'Διάδρομος Α: Οδός Πειραιώς',
             title: 'Σεράφειο Συγκρότημα',
             street: 'Πειραιώς 144 & Πέτρου Ράλλη',
             walk: 'Είσαι εδώ • Αφετηρία',
@@ -43,7 +41,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #01',
             roomBadge: '🏙️ Room III: Modern Athens',
-            corridorName: 'Corridor A: Pireos Street',
             title: 'Serafeio Complex',
             street: '144 Pireos St. & Petrou Ralli',
             walk: 'You are here • Starting Point',
@@ -75,7 +72,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 1,
         num: '#02',
-        corridorId: 'peiraios',
         eraRoom: 'modern',
         year: '1857',
         coords: [37.9782, 23.7143],
@@ -83,7 +79,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #02',
             roomBadge: '🏙️ Δωμάτιο ΙΙΙ: Νεότερη & Σύγχρονη',
-            corridorName: 'Διάδρομος Α: Οδός Πειραιώς',
             title: 'Παλιό Εργοστάσιο Φωταερίου (Γκάζι)',
             street: 'Πειραιώς 100 (Τεχνόπολη)',
             walk: '6 λεπτά περπάτημα (450m)',
@@ -114,7 +109,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #02',
             roomBadge: '🏙️ Room III: Modern Athens',
-            corridorName: 'Corridor A: Pireos Street',
             title: 'Old Gasworks (Gazi - Technopolis)',
             street: '100 Pireos St.',
             walk: '6 min walk (450m)',
@@ -146,7 +140,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 2,
         num: '#03',
-        corridorId: 'patision',
         eraRoom: 'modern',
         year: '1935',
         coords: [38.0008, 23.7378],
@@ -154,10 +147,9 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #03',
             roomBadge: '🏙️ Δωμάτιο ΙΙΙ: Νεότερη & Σύγχρονη',
-            corridorName: 'Διάδρομος Β: Πατησίων & Κυψέλη',
             title: 'Δημοτική Αγορά Κυψέλης',
             street: 'Φωκίωνος Νέγρη 42',
-            walk: 'Διάδρομος Β • Στάση 1',
+            walk: 'Αίθουσα ΙΙΙ • Μεσοπολεμική Αθήνα',
             archTag: 'Μεσοπολεμικός Μοντερνισμός / Art Deco',
             shortDesc: 'Αριστούργημα του 1935 πάνω στον πεζόδρομο της Φωκίωνος Νέγρη που σήμερα λειτουργεί ως ανοιχτή αγορά πολιτισμού.',
             audioScript: 'Έκθεμα Τρίτο: Δημοτική Αγορά Κυψέλης. Χτισμένη το 1935 σε σχέδια του αρχιτέκτονα Αλέξανδρου Μεταξά, αποτελεί κόσμημα του αθηναϊκού μεσοπολεμικού μοντερνισμού.',
@@ -185,10 +177,9 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #03',
             roomBadge: '🏙️ Room III: Modern Athens',
-            corridorName: 'Corridor B: Patission & Kypseli',
             title: 'Kypseli Municipal Market',
             street: '42 Fokionos Negri St.',
-            walk: 'Corridor B • Stop 1',
+            walk: 'Room III • Interwar Athens',
             archTag: '1935 Interwar Modernism / Art Deco',
             shortDesc: 'A 1935 modernist gem along the leafy Fokionos Negri promenade, reborn as Greece’s first participative civic & cultural agora.',
             audioScript: 'Exhibit Three: Kypseli Municipal Market. Designed in 1935 by architect Alexandros Metaxas, this symmetrical Art Deco arcade embodies the optimism of interwar Athens.',
@@ -217,7 +208,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 3,
         num: '#04',
-        corridorId: 'patision',
         eraRoom: 'modern',
         year: '1933',
         coords: [37.98644, 23.73548],
@@ -225,10 +215,9 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #04',
             roomBadge: '🏙️ Δωμάτιο ΙΙΙ: Νεότερη & Σύγχρονη',
-            corridorName: 'Διάδρομος Β: Πατησίων & Κυψέλη',
             title: 'Η Μπλε Πολυκατοικία (Εξάρχεια)',
             street: 'Αραχώβης 61 & Θεμιστοκλέους',
-            walk: 'Διάδρομος Β • Στάση 2',
+            walk: 'Αίθουσα ΙΙΙ • Μοντέρνα Αρχιτεκτονική',
             archTag: 'Πρωτοπορία Μοντέρνας Αρχιτεκτονικής',
             shortDesc: 'Το θρυλικό κτίριο του Κωστή Παναγιωτάκου (1933) που ενθουσίασε τον Λε Κορμπυζιέ και στέγασε ιστορικές προσωπικότητες.',
             audioScript: 'Έκθεμα Τέταρτο: Η Μπλε Πολυκατοικία. Χτισμένη το 1933 από τον αρχιτέκτονα Κωστή Παναγιωτάκο με χρωματική επιμέλεια του ζωγράφου Σπύρου Παπαλουκά. Ο Λε Κορμπυζιέ δήλωσε εντυπωσιασμένος όταν την επισκέφθηκε.',
@@ -250,10 +239,9 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #04',
             roomBadge: '🏙️ Room III: Modern Athens',
-            corridorName: 'Corridor B: Patission & Kypseli',
             title: 'The Blue Apartment Building',
             street: '61 Arachovis & Themistokleous St.',
-            walk: 'Corridor B • Stop 2',
+            walk: 'Room III • Modernist Architecture',
             archTag: '1933 Avant-Garde Modernism',
             shortDesc: 'Designed by Kyriakoulis Panagiotakos in 1933, this modernist icon captivated Le Corbusier and housed legendary Greek artists.',
             audioScript: 'Exhibit Four: The Blue Apartment Building in Exarcheia. Completed in 1933 by architect Kyriakoulis Panagiotakos with cobalt facades curated by painter Spyros Papaloukas. Le Corbusier famously praised its design.',
@@ -276,7 +264,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 4,
         num: '#05',
-        corridorId: 'athinas',
         eraRoom: 'modern',
         year: '1886',
         coords: [37.98037, 23.72762],
@@ -284,10 +271,9 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #05',
             roomBadge: '🏙️ Δωμάτιο ΙΙΙ: Νεότερη & Σύγχρονη',
-            corridorName: 'Διάδρομος Γ: Οδός Αθηνάς',
             title: 'Βαρβάκειος Κεντρική Αγορά',
             street: 'Οδός Αθηνάς 42',
-            walk: 'Διάδρομος Γ • Στάση 1',
+            walk: 'Αίθουσα ΙΙΙ • Αθήνα του 19ου Αιώνα',
             archTag: 'Νεοκλασική Σιδηρά & Λίθινη Αγορά',
             shortDesc: 'Η γαστρονομική και εμπορική καρδιά της Αθήνας από το 1886, με τα χαρακτηριστικά μεταλλικά ζευκτά και το ρολόι της στοάς.',
             audioScript: 'Έκθεμα Πέμπτο: Βαρβάκειος Αγορά στην οδό Αθηνάς. Εγκαινιάστηκε το 1886 σε σχέδια του Ιωάννη Κουμέλη, συνδυάζοντας τη νεοκλασική λιθοδομή με τη βιομηχανική σιδηροκατασκευή της εποχής.',
@@ -309,10 +295,9 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #05',
             roomBadge: '🏙️ Room III: Modern Athens',
-            corridorName: 'Corridor C: Athinas Street',
             title: 'Varvakeios Central Market',
             street: '42 Athinas St.',
-            walk: 'Corridor C • Stop 1',
+            walk: 'Room III • 19th-Century Athens',
             archTag: '1886 Neoclassical Cast-Iron Agora',
             shortDesc: 'The vibrant culinary and commercial heart of Athens since 1886, crowned by glass skylights and neoclassical arcades.',
             audioScript: 'Exhibit Five: Varvakeios Central Market on Athinas Street. Opened in 1886 by architect Ioannis Koumelis, it marries neoclassical stonework with 19th-century European cast-iron skylights.',
@@ -335,7 +320,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 5,
         num: '#06',
-        corridorId: 'athinas',
         eraRoom: 'modern',
         dualAncient: true,
         year: '479 π.Χ. / 1874',
@@ -344,10 +328,9 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #06',
             roomBadge: '🏛️+🏙️ Γέφυρα Αρχαίας & Νεότερης Αθήνας',
-            corridorName: 'Διάδρομος Γ: Οδός Αθηνάς',
             title: 'Δημαρχείο Αθηναίων & Αρχαία Αχαρνική Πύλη',
             street: 'Οδός Αθηνάς 63 (Πλ. Κοτζιά)',
-            walk: 'Διάδρομος Γ • Στάση 2',
+            walk: 'Αίθουσα ΙΙΙ • Νεοκλασική Αθήνα',
             archTag: 'Νεοκλασικό Μέγαρο & Κλασικό Τείχος',
             shortDesc: 'Το μέγαρο του Παναγιώτη Κάλκου (1874) συνομιλεί απευθείας με το αρχαίο Θεμιστόκλειο Τείχος και την Αχαρνική Πύλη (479 π.Χ.).',
             audioScript: 'Έκθεμα Έκτο: Δημαρχείο Αθηναίων στην Πλατεία Κοτζιά. Σχεδιάστηκε το 1874 από τον Παναγιώτη Κάλκο, ενώ μπροστά του αποκαλύπτονται σε ανοιχτό σκάμμα η αρχαία Αχαρνική Πύλη και το Θεμιστόκλειο Τείχος του 479 π.Χ.',
@@ -369,10 +352,9 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #06',
             roomBadge: '🏛️+🏙️ Ancient & Modern Bridge',
-            corridorName: 'Corridor C: Athinas Street',
             title: 'Athens City Hall & Ancient Acharnian Gate',
             street: '63 Athinas St. (Kotzia Sq.)',
-            walk: 'Corridor C • Stop 2',
+            walk: 'Room III • Neoclassical Athens',
             archTag: '1874 Palace & 479 BC Classical Wall',
             shortDesc: 'Designed by Panagiotis Kalkos in 1874, standing directly beside the excavated ruins of the 479 BC Acharnian Gate.',
             audioScript: 'Exhibit Six: Athens City Hall on Kotzia Square. Completed in 1874 by architect Panagiotis Kalkos, it overlooks the excavated ancient Acharnian Gate and classical Themistoclean Wall of 479 BC.',
@@ -395,7 +377,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 6,
         num: '#07',
-        corridorId: 'peiraios',
         eraRoom: 'ancient',
         year: '449 π.Χ.',
         coords: [37.9756, 23.7214],
@@ -403,7 +384,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #07',
             roomBadge: '🏛️ Δωμάτιο Ι: Αρχαία Αθήνα',
-            corridorName: 'Διάδρομος Α: Απόληξη Θησείου',
             title: 'Ναός Ηφαίστου (Θησείο) — Αρχαία Αγορά',
             street: 'Λόφος Αγοραίου Κολωνού (Θησείο)',
             walk: 'Αίθουσα Ι • Κλασική Αρχαιότητα',
@@ -434,7 +414,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #07',
             roomBadge: '🏛️ Room I: Ancient Athens',
-            corridorName: 'Corridor A: Thiseio & Ancient Agora',
             title: 'Temple of Hephaestus (Thiseio)',
             street: 'Agoraios Kolonos Hill (Ancient Agora)',
             walk: 'Room I • Classical Antiquity',
@@ -466,7 +445,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 7,
         num: '#08',
-        corridorId: 'athinas',
         eraRoom: 'ancient',
         year: '1ος αι. π.Χ.',
         coords: [37.9742, 23.7270],
@@ -474,7 +452,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #08',
             roomBadge: '🏛️ Δωμάτιο Ι: Αρχαία Αθήνα',
-            corridorName: 'Διάδρομος Γ: Αιόλου & Ρωμαϊκή Αγορά',
             title: 'Ωρολόγιο Κυρρήστου (Αέρηδες)',
             street: 'Πλατεία Αέρηδων (Ρωμαϊκή Αγορά)',
             walk: 'Αίθουσα Ι • Αρχαία Επιστήμη',
@@ -499,7 +476,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #08',
             roomBadge: '🏛️ Room I: Ancient Athens',
-            corridorName: 'Corridor C: Aiolou & Roman Agora',
             title: 'Tower of the Winds (Horologion of Kyrrhestos)',
             street: 'Aerides Sq. (Roman Agora)',
             walk: 'Room I • Ancient Science',
@@ -525,7 +501,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 8,
         num: '#09',
-        corridorId: 'athinas',
         eraRoom: 'byzantine',
         year: '1050 μ.Χ.',
         coords: [37.9763, 23.7286],
@@ -533,7 +508,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #09',
             roomBadge: '☦️ Δωμάτιο ΙΙ: Βυζαντινή Αθήνα',
-            corridorName: 'Διάδρομος Γ: Ιστορικό Κέντρο / Ερμού',
             title: 'Ι.Ν. Παναγίας Καπνικαρέας',
             street: 'Οδός Ερμού (Πλατεία Καπνικαρέας)',
             walk: 'Αίθουσα ΙΙ • Βυζαντινή Αθήνα',
@@ -564,7 +538,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #09',
             roomBadge: '☦️ Room II: Byzantine Athens',
-            corridorName: 'Corridor C: Historic Center / Ermou',
             title: 'Church of Panagia Kapnikarea',
             street: 'Ermou St. (Kapnikarea Sq.)',
             walk: 'Room II • Middle Byzantine Era',
@@ -596,7 +569,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 9,
         num: '#10',
-        corridorId: 'peiraios',
         eraRoom: 'byzantine',
         year: '11ος αι. μ.Χ.',
         coords: [37.97768, 23.72113],
@@ -604,7 +576,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #10',
             roomBadge: '☦️ Δωμάτιο ΙΙ: Βυζαντινή Αθήνα',
-            corridorName: 'Διάδρομος Α: Θησείο / Πλ. Ασωμάτων',
             title: 'Ι.Ν. Αγίων Ασωμάτων Θησείου',
             street: 'Πλατεία Αγίων Ασωμάτων (Ερμού & Πειραιώς)',
             walk: 'Αίθουσα ΙΙ • Βυζαντινή Αθήνα',
@@ -629,7 +600,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #10',
             roomBadge: '☦️ Room II: Byzantine Athens',
-            corridorName: 'Corridor A: Thiseio / Asomaton Sq.',
             title: 'Church of Agioi Asomatoi (Thiseio)',
             street: 'Agion Asomaton Sq. (Ermou & Pireos)',
             walk: 'Room II • 11th Century AD',
@@ -655,7 +625,6 @@ export const exhibitsData: Exhibit[] = [
     {
         id: 10,
         num: '#11',
-        corridorId: 'athinas',
         eraRoom: 'ancient',
         year: '447–432 π.Χ.',
         coords: [37.9715, 23.7267],
@@ -663,7 +632,6 @@ export const exhibitsData: Exhibit[] = [
         el: {
             code: 'ΕΚΘΕΜΑ #11',
             roomBadge: '🏛️ Δωμάτιο Ι: Αρχαία Αθήνα (Κορωνίδα)',
-            corridorName: 'Διάδρομος Γ: Ιερός Βράχος Ακρόπολης',
             title: 'Ακρόπολη & Παρθενώνας',
             street: 'Ιερός Βράχος Ακρόπολης Αθηνών',
             walk: 'Αίθουσα Ι • Το Σύμβολο της Κλασικής Αθήνας',
@@ -694,7 +662,6 @@ export const exhibitsData: Exhibit[] = [
         en: {
             code: 'EXHIBIT #11',
             roomBadge: '🏛️ Room I: Ancient Athens (Crown Jewel)',
-            corridorName: 'Corridor C: Sacred Rock of the Acropolis',
             title: 'The Acropolis & Parthenon',
             street: 'Sacred Rock of the Acropolis',
             walk: 'Room I • Universal Symbol of Classical Greece',

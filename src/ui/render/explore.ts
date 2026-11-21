@@ -1,5 +1,5 @@
 // Explore: the street map fills the screen; a sheet over it holds the exhibit
-// count, the era and corridor filters, the featured (nearest or selected) exhibit and the
+// count, the era filter, the featured (nearest or selected) exhibit and the
 // rest of the list. The sheet's top edge drags down to a strip (map nearly full
 // screen) and back up.
 import { exhibitsData } from '../../data/exhibits';
@@ -24,18 +24,10 @@ const ERAS: Array<{ id: EraRoom | 'all'; label: () => string; pill: string; dot:
     { id: 'modern', label: () => t('chipModern'), pill: 'bg-blue-50 border-blue-300 text-blue-800', dot: 'bg-blue-600' },
 ];
 
-const CORRIDORS = [
-    { id: 'all', label: () => t('corridorAll') },
-    { id: 'peiraios', label: () => t('corrPeiraios') },
-    { id: 'patision', label: () => t('corrPatision') },
-    { id: 'athinas', label: () => t('corrAthinas') },
-] as const;
-
 function mapView(s: Readonly<AppState>): MapView {
     return {
         lang: s.lang,
         eraFilter: s.eraFilter,
-        corridorFilter: s.corridorFilter,
         selectedId: s.exhibitId,
         pins: MAP_PINS.map((p) => {
             const ex = exhibitsData[p.id];
@@ -203,7 +195,7 @@ export function mountExplore(): void {
     if (host) void mountStreetMap(host, (id) => app.openExhibit(id), { keepTopOnResize: true, onBearing });
 
     view(
-        (s) => [s.lang, s.eraFilter, s.corridorFilter, s.exhibitId, s.gps, s.coords, s.demoMode],
+        (s) => [s.lang, s.eraFilter, s.exhibitId, s.gps, s.coords, s.demoMode],
         (s) => updateStreetMap(mapView(s)),
     );
 
@@ -228,14 +220,12 @@ export function mountExplore(): void {
         () => {
             setText('exCredit', t('mapCreditShort'));
             $('exEraSelect')?.setAttribute('aria-label', t('eraFilterLabel'));
-            $('exCorridorSelect')?.setAttribute('aria-label', t('corridorFilterLabel'));
         },
     );
 
-    // Exhibit count, era filter (its options count per era, following the
-    // corridor filter) and the corridor picker.
+    // Exhibit count and the era filter (its options count per era).
     view(
-        (s) => [s.lang, s.eraFilter, s.corridorFilter],
+        (s) => [s.lang, s.eraFilter],
         (s) => {
             const shown = exhibitsData.filter((ex) => matchesFilters(ex, s)).length;
             setText('exCount', t(shown === 1 ? 'exCountOne' : 'exCount', { n: shown }));
@@ -251,15 +241,12 @@ export function mountExplore(): void {
                     return `<option value="${e.id}" ${e.id === s.eraFilter ? 'selected' : ''}>${label} (${n})</option>`;
                 }).join(''),
             );
-            const current = CORRIDORS.find((c) => c.id === s.corridorFilter) ?? CORRIDORS[0];
-            setText('exCorridorText', current.label());
-            setHtml('exCorridorSelect', CORRIDORS.map((c) => `<option value="${c.id}" ${c.id === s.corridorFilter ? 'selected' : ''}>${c.label()}</option>`).join(''));
         },
     );
 
     // Featured card + list, sorted by distance when the position is known.
     view(
-        (s) => [s.lang, s.eraFilter, s.corridorFilter, s.exhibitId, s.stamps, s.gps, s.coords, s.demoMode],
+        (s) => [s.lang, s.eraFilter, s.exhibitId, s.stamps, s.gps, s.coords, s.demoMode],
         (s) => {
             const shown = exhibitsData.filter((ex) => matchesFilters(ex, s));
             if (shown.length === 0) {

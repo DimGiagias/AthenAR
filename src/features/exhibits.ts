@@ -45,9 +45,7 @@ export function hotspotsFor(
 }
 
 export function matchesFilters(ex: Exhibit, s: Readonly<AppState>): boolean {
-    const corridorOk = s.corridorFilter === 'all' || ex.corridorId === s.corridorFilter;
-    const eraOk = s.eraFilter === 'all' || ex.eraRoom === s.eraFilter || (s.eraFilter === 'ancient' && ex.dualAncient === true);
-    return corridorOk && eraOk;
+    return s.eraFilter === 'all' || ex.eraRoom === s.eraFilter || (s.eraFilter === 'ancient' && ex.dualAncient === true);
 }
 
 export function nearestExhibit(coords: [number, number]): { exhibit: Exhibit; meters: number } {

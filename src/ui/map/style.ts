@@ -1,10 +1,10 @@
 // The look of the street map: OpenStreetMap data drawn in the app's own
-// sky-and-marble palette, with the museum rooms, corridors and the City's
+// sky-and-marble palette, with the museum rooms and the City's
 // district boundaries on top. Pure data: no map instance, no DOM.
 import type { ExpressionSpecification, LayerSpecification, StyleSpecification } from 'maplibre-gl';
 import { MAP_BBOX, MAP_TILE_MAX_ZOOM, MAP_TILE_MIN_ZOOM } from '../../data/mapAreas';
 import type { FeatureCollection } from 'geojson';
-import type { CorridorId, EraRoom, Lang } from '../../data/types';
+import type { EraRoom, Lang } from '../../data/types';
 
 const C = {
     land: '#F1F7FD',
@@ -22,7 +22,7 @@ const C = {
     roadText: '#5B6B80',
     placeText: '#1E3A5F',
     halo: '#FFFFFF',
-    faded: '#DCE8F4',
+    pireosAxis: '#38BDF8',
 };
 
 export const ROOM_COLOURS: Record<EraRoom, { fill: string; line: string; text: string }> = {
@@ -30,7 +30,6 @@ export const ROOM_COLOURS: Record<EraRoom, { fill: string; line: string; text: s
     byzantine: { fill: '#818CF8', line: '#4F46E5', text: '#3730A3' },
     modern: { fill: '#38BDF8', line: '#0284C7', text: '#0369A1' },
 };
-const CORRIDOR_COLOURS: Record<CorridorId, string> = { peiraios: '#38BDF8', patision: '#60A5FA', athinas: '#0EA5E9' };
 
 const GREEN_KINDS = [
     'park', 'garden', 'grass', 'wood', 'forest', 'cemetery', 'scrub', 'pitch', 'playground',
@@ -66,12 +65,6 @@ function road(id: string, kind: string, minzoom: number, stops: number[], edge: 
     ];
 }
 
-/** Corridor line colour, with the corridors outside the current filter faded. */
-export function corridorColour(active: CorridorId | 'all'): ExpressionSpecification {
-    const pick = (id: CorridorId): string => (active === 'all' || active === id ? CORRIDOR_COLOURS[id] : C.faded);
-    return ['match', ['get', 'corridor'], 'peiraios', pick('peiraios'), 'patision', pick('patision'), 'athinas', pick('athinas'), C.faded];
-}
-
 /** Room fill strength, with the rooms outside the current filter faded. */
 export function roomOpacity(active: EraRoom | 'all'): ExpressionSpecification {
     const pick = (room: EraRoom): number => (active === 'all' || active === room ? 0.2 : 0.05);
@@ -98,7 +91,6 @@ export function buildStyle(baseUrl: string, lang: Lang): StyleSpecification {
             },
             rooms: { type: 'geojson', data: EMPTY },
             'room-labels': { type: 'geojson', data: EMPTY },
-            corridors: { type: 'geojson', data: `${baseUrl}city/corridors.geojson` },
             'pireos-axis': { type: 'geojson', data: `${baseUrl}city/pireos-axis.geojson` },
             districts: { type: 'geojson', data: EMPTY },
             'district-labels': { type: 'geojson', data: EMPTY },
@@ -118,7 +110,7 @@ export function buildStyle(baseUrl: string, lang: Lang): StyleSpecification {
             },
 
             // The City's "historic axis of Pireos Street" (open data).
-            { id: 'pireos-axis', type: 'fill', source: 'pireos-axis', paint: { 'fill-color': CORRIDOR_COLOURS.peiraios, 'fill-opacity': 0.1 } },
+            { id: 'pireos-axis', type: 'fill', source: 'pireos-axis', paint: { 'fill-color': C.pireosAxis, 'fill-opacity': 0.1 } },
             // Museum rooms.
             { id: 'rooms-fill', type: 'fill', source: 'rooms', paint: { 'fill-color': ['get', 'fill'], 'fill-opacity': roomOpacity('all') } },
 
@@ -135,14 +127,6 @@ export function buildStyle(baseUrl: string, lang: Lang): StyleSpecification {
             ...roads.map((r) => r[0]),
             ...roads.map((r) => r[1]),
 
-            // Museum corridors: the real streets, highlighted.
-            {
-                id: 'corridors',
-                type: 'line',
-                source: 'corridors',
-                layout: { 'line-cap': 'round', 'line-join': 'round' },
-                paint: { 'line-color': corridorColour('all'), 'line-width': width(11, 2.5, 14, 5.5, 16, 9, 18, 20) },
-            },
             { id: 'rooms-line', type: 'line', source: 'rooms', paint: { 'line-color': ['get', 'line'], 'line-width': 1.4, 'line-dasharray': [3, 2], 'line-opacity': 0.9 } },
             // Municipal districts of the City of Athens (open data).
             { id: 'districts-line', type: 'line', source: 'districts', paint: { 'line-color': '#94A3B8', 'line-width': 1, 'line-opacity': 0.7 } },

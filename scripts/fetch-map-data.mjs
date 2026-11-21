@@ -1,14 +1,13 @@
 // Download everything the offline street map needs into public/map/:
 //
 //   node scripts/fetch-map-data.mjs            (all steps)
-//   node scripts/fetch-map-data.mjs tiles      (one step: tiles | fonts | city | streets)
+//   node scripts/fetch-map-data.mjs tiles      (one step: tiles | fonts | city)
 //
 // The results are committed, so this only needs re-running to refresh the map
 // or change its area. Sources and licences:
 //   tiles    Protomaps daily build of OpenStreetMap    © OpenStreetMap contributors, ODbL
 //   fonts    Noto Sans glyphs from protomaps/basemaps-assets          SIL Open Font License
 //   city     City of Athens open data, gis.cityofathens.gr / opendata.cityofathens.gr
-//   streets  OpenStreetMap via the Overpass API        © OpenStreetMap contributors, ODbL
 import fs from 'node:fs';
 import path from 'node:path';
 import { fromVectorTileJs } from '@maplibre/vt-pbf';
@@ -169,48 +168,8 @@ async function city() {
     }
 }
 
-/**
- * The three museum corridors as lines along the real streets.
- * Each rule: street names in OpenStreetMap + the stretch of them we use.
- */
-const CORRIDORS = [
-    // Pireos is called Panagi Tsaldari on its last stretch into Omonia.
-    { id: 'peiraios', names: ['Πειραιώς', 'Παναγή Τσαλδάρη'], keep: ([lng]) => lng >= 23.7035 },
-    { id: 'patision', names: ['Πατησίων'], keep: ([, lat]) => lat <= 38.0022 },
-    { id: 'patision', names: ['Φωκίωνος Νέγρη'], keep: ([lng]) => lng <= 23.7385 },
-    { id: 'athinas', names: ['Αθηνάς'], keep: () => true },
-];
-
-async function streets() {
-    const names = CORRIDORS.flatMap((c) => c.names).join('|');
-    const query = `[out:json][timeout:60];way["highway"]["name"~"^(${names})$"](37.955,23.69,38.012,23.745);out geom;`;
-    // The public Overpass servers are often busy: try each in turn.
-    const servers = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
-    let data;
-    for (const server of servers) {
-        try {
-            const res = await get(server, { method: 'POST', body: new URLSearchParams({ data: query }), headers: { 'User-Agent': 'map-data-build-script' } });
-            data = await res.json();
-            break;
-        } catch (err) {
-            console.log(`   ${server} failed (${err.message}), trying the next one`);
-        }
-    }
-    if (!data) throw new Error('No Overpass server answered; try again later.');
-    const features = [];
-    for (const way of data.elements) {
-        const rule = CORRIDORS.find((c) => c.names.includes(way.tags.name));
-        const line = tidy(way.geometry.map((p) => [p.lon, p.lat])).filter(rule.keep);
-        if (line.length >= 2) features.push({ type: 'Feature', properties: { corridor: rule.id }, geometry: { type: 'LineString', coordinates: line } });
-    }
-    const file = path.join(out, 'city', 'corridors.geojson');
-    write(file, JSON.stringify({ type: 'FeatureCollection', features }));
-    console.log(`streets: ${features.length} lines, ${(fs.statSync(file).size / 1024).toFixed(0)} KB`);
-}
-
 if (isMain) {
     if (wants('tiles')) await tiles();
     if (wants('fonts')) await fonts();
     if (wants('city')) await city();
-    if (wants('streets')) await streets();
 }
