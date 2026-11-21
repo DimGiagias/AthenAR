@@ -115,6 +115,15 @@ function mapCard(s: Readonly<AppState>, u: Readonly<UiState>): string {
     return `<div role="dialog" aria-label="${t('layersTitle')}" class="bg-white rounded-[20px] p-3 shadow-[0_16px_36px_rgba(15,23,42,0.22)] flex flex-col gap-2 fade-in">${inner}</div>`;
 }
 
+/** The card, placed at its station or venue on the map. */
+function mapCardView(s: Readonly<AppState>, u: Readonly<UiState>): MapView['card'] {
+    const card = u.mapCard;
+    if (!card) return null;
+    const at = card.layer === 'metro' ? METRO_STATIONS[card.id] : venueById(card.id);
+    const html = mapCard(s, u);
+    return at && html ? { key: `${card.layer}:${card.id}`, lat: at.lat, lng: at.lng, html } : null;
+}
+
 function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
     return {
         lang: s.lang,
@@ -127,6 +136,7 @@ function mapView(s: Readonly<AppState>, u: Readonly<UiState>): MapView {
         user: s.gps === 'active' && s.coords ? { lat: s.coords[0], lng: s.coords[1], demo: s.demoMode, label: t(s.demoMode ? 'youLabelDemo' : 'youLabel') } : null,
         place: mapPlace(s, u),
         stops: mapStops(s, u),
+        card: mapCardView(s, u),
         roomLabels: { ancient: t('mapRoomAncient'), byzantine: t('mapRoomByzantine'), modern: t('mapRoomModern') },
         unavailableText: t('mapUnavailable'),
     };
@@ -303,16 +313,6 @@ export function mountExplore(): void {
             $('exLayersBtn')?.setAttribute('aria-expanded', String(u.mapLayersPanel));
             setHidden('exLayersPanel', !u.mapLayersPanel);
             if (u.mapLayersPanel) setHtml('exLayersPanel', layersPanel(u));
-        },
-    );
-
-    // The card of a tapped station or venue.
-    view(
-        (s, u) => [s.lang, u.mapCard],
-        (s, u) => {
-            const card = mapCard(s, u);
-            setHidden('exMapCard', card === '');
-            setHtml('exMapCard', card);
         },
     );
 

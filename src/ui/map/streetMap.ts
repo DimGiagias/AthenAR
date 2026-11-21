@@ -53,6 +53,8 @@ export interface MapView {
     place: { kind: 'venue' | 'metro'; lat: number; lng: number; label: string } | null;
     /** The optional layers' pins. */
     stops: MapStopView[];
+    /** The card of a tapped layer pin, shown just above it; `key` names the pin. */
+    card: { key: string; lat: number; lng: number; html: string } | null;
     roomLabels: Record<EraRoom, string>;
     /** shown instead of the map if the device cannot draw it */
     unavailableText: string;
@@ -62,6 +64,10 @@ export interface MapView {
 const LABEL_ZOOM = 12.8;
 /** Layer pins are small dots below this zoom, and get icons (and stations their names) from it up. */
 const STOPS_NEAR_ZOOM = 14.5;
+/** Room kept between a card and the map's edges: clear of the GPS button at the top and the map buttons on the right. */
+const CARD_MARGIN = { top: 52, left: 10, right: 58, bottom: 10 };
+/** Gap between a card's pointer and the middle of its pin. */
+const CARD_LIFT = 15;
 /** Room outlines are drawn this far (metres) around their exhibits. */
 const ROOM_MARGIN_M = 170;
 // Keeps pins clear of the edges and of the zoom buttons that float over the map.
@@ -78,6 +84,7 @@ const pinMarkers = new Map<number, { marker: Marker; el: HTMLButtonElement; labe
 let userMarker: { marker: Marker; el: HTMLDivElement; label: HTMLSpanElement } | null = null;
 const stopMarkers = new Map<string, { marker: Marker; el: HTMLButtonElement; dot: HTMLSpanElement; label: HTMLSpanElement; glyph: IconName }>();
 let onPickStop: (layer: 'metro' | 'venue', id: number) => void = () => {};
+let cardMarker: { key: string; html: string; el: HTMLDivElement; marker: Marker } | null = null;
 let placeMarker: { kind: 'venue' | 'metro'; marker: Marker; label: HTMLSpanElement } | null = null;
 
 let fittedFor = '';
@@ -259,6 +266,7 @@ function apply(): void {
     drawRooms();
     drawPins();
     drawStops();
+    drawCard();
     drawUser();
     drawPlace();
     syncLabelVisibility();
@@ -391,6 +399,45 @@ function drawStops(): void {
         entry.marker.remove();
         stopMarkers.delete(key);
     }
+}
+
+function drawCard(): void {
+    if (!map || !view || !MarkerClass) return;
+    const card = view.card;
+    if (cardMarker && cardMarker.key !== card?.key) {
+        cardMarker.marker.remove();
+        cardMarker = null;
+    }
+    if (!card) return;
+    if (cardMarker) {
+        if (cardMarker.html !== card.html) {
+            cardMarker.el.innerHTML = card.html;
+            cardMarker.html = card.html;
+        }
+        return;
+    }
+    const el = document.createElement('div');
+    el.className = 'map-card';
+    el.innerHTML = card.html;
+    const marker = new MarkerClass({ element: el, anchor: 'bottom', offset: [0, -CARD_LIFT] }).setLngLat([card.lng, card.lat]).addTo(map);
+    cardMarker = { key: card.key, html: card.html, el, marker };
+    keepCardInView(el, card);
+}
+
+/** Pan just enough that a card that has just opened is all on the visible map. */
+function keepCardInView(el: HTMLElement, at: { lat: number; lng: number }): void {
+    if (!map || !host) return;
+    const p = map.project([at.lng, at.lat]);
+    const half = el.offsetWidth / 2;
+    const top = p.y - CARD_LIFT - el.offsetHeight;
+    let dx = 0;
+    if (p.x - half < CARD_MARGIN.left) dx = CARD_MARGIN.left - (p.x - half);
+    else if (p.x + half > host.clientWidth - CARD_MARGIN.right) dx = host.clientWidth - CARD_MARGIN.right - (p.x + half);
+    let dy = 0;
+    if (top < CARD_MARGIN.top) dy = CARD_MARGIN.top - top;
+    else if (p.y > host.clientHeight - CARD_MARGIN.bottom) dy = host.clientHeight - CARD_MARGIN.bottom - p.y;
+    // panBy moves the view, so the map content moves the other way
+    if (dx || dy) map.panBy([-dx, -dy], { duration: 300 });
 }
 
 function syncLabelVisibility(): void {
