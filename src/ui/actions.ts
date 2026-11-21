@@ -141,9 +141,6 @@ export const app = {
     dismissOverlay(): void {
         setState({ offTargetOverlay: false });
     },
-    collect(): void {
-        void collectStamp();
-    },
     pin(index: number): void {
         setState({ hotspotIndex: index });
         setUi({ story: true });
@@ -155,7 +152,6 @@ export const app = {
         if (total < 1) return;
         setState({ hotspotIndex: (getState().hotspotIndex + delta + total) % total });
     },
-    placeInRoom,
     exitRoom,
     placeHere,
     /** Open a room AR tool's ruler, or close it when it is already open. */

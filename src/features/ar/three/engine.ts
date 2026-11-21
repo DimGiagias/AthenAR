@@ -258,11 +258,6 @@ export function isImageTracking(): boolean {
     return tracking !== null;
 }
 
-/** True while the image is out of view and the gyroscope holds the model. */
-export function isHoldingModel(): boolean {
-    return holdWorld !== null;
-}
-
 const poseMatrix = new THREE.Matrix4();
 const placeMatrix = new THREE.Matrix4();
 const stepMatrix = new THREE.Matrix4();
