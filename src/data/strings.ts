@@ -5,7 +5,7 @@ export const uiStrings = {
         // --- welcome ---
         wSubtitle: 'ΤΟ ΑΝΟΙΧΤΟ ΜΟΥΣΕΙΟ ΤΗΣ ΑΘΗΝΑΣ',
         wLine1: 'Η ιστορία της πόλης, στους δρόμους της',
-        wLine2: 'Ζωντανή 2D & 3D AR Ξενάγηση',
+        wLine2: 'Ζωντανή 3D AR Ξενάγηση',
         wEnter: 'Είσοδος στο Μουσείο',
         // --- navigation ---
         navExplore: 'Εξερεύνηση',
@@ -297,7 +297,7 @@ export const uiStrings = {
     en: {
         wSubtitle: 'THE OPEN-AIR MUSEUM OF ATHENS',
         wLine1: 'The history of the city, in its streets',
-        wLine2: 'Live 2D & 3D AR Guided Tour',
+        wLine2: 'Live 3D AR Guided Tour',
         wEnter: 'Enter the Museum',
         navExplore: 'Explore',
         navAr: 'Live AR',
